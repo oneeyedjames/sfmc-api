@@ -8,6 +8,9 @@ import {
 } from './api';
 
 export class ObjectApi {
+	private cache: {[key:string]:string} = {};
+	private cacheTTL = 900000; // 15 minutes
+
 	constructor(
 		protected getObject: ApiObjectFactory,
 		protected props: string[] = []
@@ -23,6 +26,12 @@ export class ObjectApi {
 	}
 
 	protected async toPromise<T = any>(req: ApiObject) {
+		const key = JSON.stringify(req.config);
+		if (this.cache[key] !== undefined) {
+			console.log('CACHE', req.objName, new Date());
+			return JSON.parse(this.cache[key]) as T[];
+		}
+
 		console.log('GET', req.objName, new Date());
 		const time = Date.now();
 
@@ -37,6 +46,8 @@ export class ObjectApi {
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {
+			setTimeout(() => delete this.cache[key], this.cacheTTL);
+			this.cache[key] = JSON.stringify(res.body.Results);
 			return res.body.Results as T[];
 		} else {
 			throw new Error(res.error || res);

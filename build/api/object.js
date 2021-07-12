@@ -15,6 +15,8 @@ class ObjectApi {
     constructor(getObject, props = []) {
         this.getObject = getObject;
         this.props = props;
+        this.cache = {};
+        this.cacheTTL = 900000; // 15 minutes
     }
     get(value, field = 'ID') {
         if (this.getObject !== undefined) {
@@ -27,6 +29,11 @@ class ObjectApi {
     }
     toPromise(req) {
         return __awaiter(this, void 0, void 0, function* () {
+            const key = JSON.stringify(req.config);
+            if (this.cache[key] !== undefined) {
+                console.log('CACHE', req.objName, new Date());
+                return JSON.parse(this.cache[key]);
+            }
             console.log('GET', req.objName, new Date());
             const time = Date.now();
             const res = yield async_1.asyncToPromise(req.get.bind(req));
@@ -37,6 +44,8 @@ class ObjectApi {
             // }
             if (res.body.OverallStatus == 'OK' ||
                 res.body.OverallStatus == 'MoreDataAvailable') {
+                setTimeout(() => delete this.cache[key], this.cacheTTL);
+                this.cache[key] = JSON.stringify(res.body.Results);
                 return res.body.Results;
             }
             else {
