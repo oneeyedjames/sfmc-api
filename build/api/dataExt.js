@@ -12,9 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataExtApi = void 0;
 const object_1 = require("./object");
 class DataExtApi extends object_1.ObjectApi {
-    constructor(factory, extName, props = []) {
+    constructor(factory, extName, props = [], propMap = {}) {
         super(factory, [...DataExtApi.Props, ...props]);
         this.extName = extName;
+        this.propMap = propMap;
     }
     get(value, field = 'Id') {
         const _super = Object.create(null, {
@@ -25,10 +26,8 @@ class DataExtApi extends object_1.ObjectApi {
             return rows.map(row => {
                 const data = {};
                 row.Properties.Property.forEach((prop) => {
-                    const key = prop.Name
-                        .replace(/__c$/, '')
-                        .replace('_', '')
-                        .replace('_', '');
+                    let key = (this.propMap[prop.Name] || prop.Name);
+                    key = key.replace(/__c$/, '').replace('_', '').replace('_', '');
                     data[key] = prop.Value;
                 });
                 return data;
@@ -56,6 +55,9 @@ DataExtApi.ContactProps = [
     'Contact_Status__c',
     'Time_Zone__c'
 ];
+DataExtApi.ContactPropMap = {
+    Contact_Status__c: 'Status'
+};
 DataExtApi.SubscriptionType = 'Subscription__c_Salesforce';
 DataExtApi.SubscriptionProps = [
     'Business_Location__c',
@@ -67,3 +69,8 @@ DataExtApi.SubscriptionProps = [
     'Inactive_Reason__c',
     'Welcome_Status__c'
 ];
+DataExtApi.SubscriptionPropMap = {
+    Contact__c: 'ContactId',
+    Global_Product__c: 'GlobalProductId',
+    Line_of_Business__c: 'LineOfBusiness'
+};

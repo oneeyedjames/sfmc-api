@@ -19,6 +19,10 @@ export class DataExtApi extends ObjectApi {
 		'Time_Zone__c'
 	];
 
+	static readonly ContactPropMap = {
+		Contact_Status__c: 'Status'
+	};
+
 	static readonly SubscriptionType = 'Subscription__c_Salesforce';
 
 	static readonly SubscriptionProps = [
@@ -32,10 +36,17 @@ export class DataExtApi extends ObjectApi {
 		'Welcome_Status__c'
 	];
 
+	static readonly SubscriptionPropMap = {
+		Contact__c: 'ContactId',
+		Global_Product__c: 'GlobalProductId',
+		Line_of_Business__c: 'LineOfBusiness'
+	};
+
 	constructor(
 		factory: ApiObjectFactory,
 		protected extName: string,
-		props: string[] = []
+		props: string[] = [],
+		protected propMap: { [prop: string]: string } = {}
 	) {
 		super(factory, [...DataExtApi.Props, ...props]);
 	}
@@ -47,11 +58,8 @@ export class DataExtApi extends ObjectApi {
 			const data = {} as { [key: string]: any };
 
 			row.Properties.Property.forEach((prop: any) => {
-				const key = (prop.Name as string)
-					.replace(/__c$/, '')
-					.replace('_', '')
-					.replace('_', '');
-
+				let key = (this.propMap[prop.Name] || prop.Name) as string;
+				key = key.replace(/__c$/, '').replace('_', '').replace('_', '');
 				data[key] = prop.Value;
 			});
 

@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import * as ET_Client from 'sfmc-fuelsdk-node';
 
-// import { ObjectApi } from './api/object';
 import { SubscriberApi } from './api/subscriber';
 import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
@@ -47,21 +46,18 @@ export class ApiClient {
 		this.router = Router()
 		.get('/subscriber/lists', (req: Request, resp: Response) => {
 			this.subscribers.get(req.query.email as string, 'EmailAddress')
-			.then(res => this.getSubscriberData(res))
 			.then(res => this.getSubscriberLists(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/subscriber/events', (req: Request, resp: Response) => {
 			this.subscribers.get(req.query.email as string, 'EmailAddress')
-			.then(res => this.getSubscriberData(res))
 			.then(res => this.getSubscriberEvents(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/subscriber/complete', (req: Request, resp: Response) => {
 			this.subscribers.get(req.query.email as string, 'EmailAddress')
-			.then(res => this.getSubscriberData(res))
 			.then(res => this.getSubscriberLists(res))
 			.then(res => this.getSubscriberEvents(res))
 			.then(res => resp.json(res))
@@ -69,7 +65,17 @@ export class ApiClient {
 		})
 		.get('/subscriber', (req: Request, resp: Response) => {
 			this.subscribers.get(req.query.email as string, 'EmailAddress')
-			.then(res => this.getSubscriberData(res))
+			.then(res => resp.json(res))
+			.catch(this.handleError(resp));
+		})
+		.get('/contact/subscriptions', (req: Request, resp: Response) => {
+			this.contacts.get(req.query.email as string, 'Email')
+			.then(res => this.getContactSubscriptions(res))
+			.then(res => resp.json(res))
+			.catch(this.handleError(resp));
+		})
+		.get('/contact', (req: Request, resp: Response) => {
+			this.contacts.get(req.query.email as string, 'Email')
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		});
@@ -100,23 +106,10 @@ export class ApiClient {
 			EventApi.UnsubProps);
 
 		this.contacts = new DataExtApi(cfg => this.client.dataExtensionRow(cfg),
-			DataExtApi.ContactType, DataExtApi.ContactProps);
+			DataExtApi.ContactType, DataExtApi.ContactProps, DataExtApi.ContactPropMap);
 
 		this.subscriptions = new DataExtApi(cfg => this.client.dataExtensionRow(cfg),
-			DataExtApi.SubscriptionType, DataExtApi.SubscriptionProps);
-	}
-
-	private async getSubscriberData(subs: any[]) {
-		// const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey);
-		//
-		// const cons = await this.contacts.get(subKeys);
-		//
-		// cons.forEach(con => {
-		// 	const sub = subs.find(sub => sub.SubscriberKey == con.Id);
-		// 	if (sub != undefined) sub.Data = con;
-		// });
-
-		return subs;
+			DataExtApi.SubscriptionType, DataExtApi.SubscriptionProps, DataExtApi.SubscriptionPropMap);
 	}
 
 	private async getSubscriberLists(subs: any[]) {
@@ -148,15 +141,6 @@ export class ApiClient {
 				});
 			}
 		});
-
-		// const scripts = await this.subscriptions.get(subKeys, 'Contact__c');
-		//
-		// subs.forEach(sub => sub.Lists.forEach((subList: any) => {
-		// 	if (subList.ListCode !== undefined) {
-		// 		const script = scripts.find(s => s.GlobalProductCode == subList.ListCode);
-		// 		if (script !== undefined) subList.Data = script;
-		// 	}
-		// }));
 
 		return subs;
 	}
@@ -208,6 +192,22 @@ export class ApiClient {
 		});
 
 		return subs;
+	}
+
+	private async getContactSubscriptions(cons: any[]) {
+		const conIds = this.getUniqueSet(cons, con => con.Id as string);
+		const subs = await this.subscriptions.get(conIds, 'Contact__c');
+
+		subs.forEach(sub => {
+			const con = cons.find(con => con.Id == sub.ContactId);
+
+			if (con !== undefined) {
+				con.Subscriptions = con.Subscriptions || [];
+				con.Subscriptions.push(sub);
+			}
+		});
+
+		return cons;
 	}
 
 	private getUniqueSet<T, V>(items: T[], cb: (item: T) => V) {
