@@ -5,7 +5,6 @@ import { SubscriberApi } from './api/subscriber';
 import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi } from './api/event';
-
 import { DataExtApi } from './api/dataExt';
 
 export type ApiClientConfig = {
@@ -24,7 +23,6 @@ export class ApiClient {
 	readonly subscribers: SubscriberApi;
 
 	readonly lists: ListApi;
-	// readonly listSubscribers: ListSubscriberApi;
 
 	readonly sends: SendApi;
 
@@ -45,37 +43,43 @@ export class ApiClient {
 
 		this.router = Router()
 		.get('/subscriber/lists', (req: Request, resp: Response) => {
-			this.subscribers.get(req.query.email as string, 'EmailAddress')
+			const [value, field] = this.getParams(req);
+			this.subscribers.get(value, field)
 			.then(res => this.getSubscriberLists(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/subscriber/events', (req: Request, resp: Response) => {
-			this.subscribers.get(req.query.email as string, 'EmailAddress')
+			const [value, field] = this.getParams(req);
+			this.subscribers.get(value, field)
 			.then(res => this.getSubscriberEvents(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/subscriber/complete', (req: Request, resp: Response) => {
-			this.subscribers.get(req.query.email as string, 'EmailAddress')
+			const [value, field] = this.getParams(req);
+			this.subscribers.get(value, field)
 			.then(res => this.getSubscriberLists(res))
 			.then(res => this.getSubscriberEvents(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/subscriber', (req: Request, resp: Response) => {
-			this.subscribers.get(req.query.email as string, 'EmailAddress')
+			const [value, field] = this.getParams(req);
+			this.subscribers.get(value, field)
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/contact/subscriptions', (req: Request, resp: Response) => {
-			this.contacts.get(req.query.email as string, 'Email')
+			const [value, field] = this.getParams(req, false);
+			this.contacts.get(value, field)
 			.then(res => this.getContactSubscriptions(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 		.get('/contact', (req: Request, resp: Response) => {
-			this.contacts.get(req.query.email as string, 'Email')
+			const [value, field] = this.getParams(req, false);
+			this.contacts.get(value, field)
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		});
@@ -208,6 +212,18 @@ export class ApiClient {
 		});
 
 		return cons;
+	}
+
+	private getParams(req: Request, mc = true): [string, string] {
+		let value = req.query.key as string;
+		let field = mc ? 'SubscriberKey' : 'Id';
+
+		if (value === undefined) {
+			value = req.query.email as string;
+			field = mc ? 'EmailAddress' : 'Email';
+		}
+
+		return [value, field];
 	}
 
 	private getUniqueSet<T, V>(items: T[], cb: (item: T) => V) {

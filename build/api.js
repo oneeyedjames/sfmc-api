@@ -25,37 +25,43 @@ class ApiClient {
         });
         this.router = express_1.Router()
             .get('/subscriber/lists', (req, resp) => {
-            this.subscribers.get(req.query.email, 'EmailAddress')
+            const [value, field] = this.getParams(req);
+            this.subscribers.get(value, field)
                 .then(res => this.getSubscriberLists(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/subscriber/events', (req, resp) => {
-            this.subscribers.get(req.query.email, 'EmailAddress')
+            const [value, field] = this.getParams(req);
+            this.subscribers.get(value, field)
                 .then(res => this.getSubscriberEvents(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/subscriber/complete', (req, resp) => {
-            this.subscribers.get(req.query.email, 'EmailAddress')
+            const [value, field] = this.getParams(req);
+            this.subscribers.get(value, field)
                 .then(res => this.getSubscriberLists(res))
                 .then(res => this.getSubscriberEvents(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/subscriber', (req, resp) => {
-            this.subscribers.get(req.query.email, 'EmailAddress')
+            const [value, field] = this.getParams(req);
+            this.subscribers.get(value, field)
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/contact/subscriptions', (req, resp) => {
-            this.contacts.get(req.query.email, 'Email')
+            const [value, field] = this.getParams(req, false);
+            this.contacts.get(value, field)
                 .then(res => this.getContactSubscriptions(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/contact', (req, resp) => {
-            this.contacts.get(req.query.email, 'Email')
+            const [value, field] = this.getParams(req, false);
+            this.contacts.get(value, field)
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         });
@@ -151,6 +157,15 @@ class ApiClient {
             });
             return cons;
         });
+    }
+    getParams(req, mc = true) {
+        let value = req.query.key;
+        let field = mc ? 'SubscriberKey' : 'Id';
+        if (value === undefined) {
+            value = req.query.email;
+            field = mc ? 'EmailAddress' : 'Email';
+        }
+        return [value, field];
     }
     getUniqueSet(items, cb) {
         return Array.from(new Set(items.map(cb)));
