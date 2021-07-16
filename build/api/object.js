@@ -21,25 +21,22 @@ class ObjectApi {
     get(value, field = 'ID') {
         if (this.getObject !== undefined) {
             const config = this.getConfig(value, field);
-            return this.toPromise(this.getObject(config));
+            return this.getPromise(this.getObject(config));
         }
         else {
             return Promise.reject('No API Object');
         }
     }
-    toPromise(req) {
+    getPromise(obj) {
         return __awaiter(this, void 0, void 0, function* () {
-            const key = JSON.stringify(req.config);
+            const key = JSON.stringify(obj.config);
             if (this.cache.isset(key))
                 return this.cache.get(key).payload;
-            console.log('GET', req.objName, new Date());
+            console.log('GET', obj.objName, new Date());
             const time = Date.now();
-            const res = yield async_1.asyncToPromise(req.get.bind(req))();
+            const res = yield async_1.asyncToPromise(obj.get.bind(obj))();
             const length = Date.now() - time;
-            console.log('GET', req.objName, `${length} ms`);
-            // if (length > 1000) {
-            // 	console.log(req.config, `${res.body.Results.length} records`);
-            // }
+            console.log('GET', obj.objName, `${length} ms`);
             if (res.body.OverallStatus == 'OK' ||
                 res.body.OverallStatus == 'MoreDataAvailable') {
                 this.cache.set(key, res.body.Results);

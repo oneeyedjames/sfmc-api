@@ -6,7 +6,7 @@ class ApiObject {
         this.objName = objName;
         this.parent = parent;
         this.config = config;
-        this.props = config.props || [];
+        this.props = config.props || {};
         this.options = config.options || {};
     }
     get(cb) {

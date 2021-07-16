@@ -19,29 +19,25 @@ export class ObjectApi {
 	get(value?: string | string[], field = 'ID') {
 		if (this.getObject !== undefined) {
 			const config = this.getConfig(value, field);
-			return this.toPromise(this.getObject(config));
+			return this.getPromise(this.getObject(config));
 		} else {
 			return Promise.reject('No API Object');
 		}
 	}
 
-	protected async toPromise<T = any>(req: ApiObject) {
-		const key = JSON.stringify(req.config);
+	protected async getPromise<T = any>(obj: ApiObject) {
+		const key = JSON.stringify(obj.config);
 
 		if (this.cache.isset(key))
 			return this.cache.get<T[]>(key).payload;
 
-		console.log('GET', req.objName, new Date());
+		console.log('GET', obj.objName, new Date());
 		const time = Date.now();
 
-		const res = await asyncToPromise(req.get.bind(req))();
+		const res = await asyncToPromise(obj.get.bind(obj))();
 
 		const length = Date.now() - time;
-		console.log('GET', req.objName, `${length} ms`);
-
-		// if (length > 1000) {
-		// 	console.log(req.config, `${res.body.Results.length} records`);
-		// }
+		console.log('GET', obj.objName, `${length} ms`);
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {

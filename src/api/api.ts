@@ -2,8 +2,10 @@ import * as ApiClient from 'sfmc-fuelsdk-node';
 
 import { AsyncObject, AsyncCallback } from '../async';
 
+export type ApiObjectProps = string[] | { [key: string]: string };
+
 export type ApiObjectConfig = {
-	props?: string[];
+	props?: ApiObjectProps;
 	filter?: ApiObjectFilter;
 	options?: any;
 }
@@ -19,7 +21,7 @@ export type ApiObjectFactory = {
 }
 
 export class ApiObject implements AsyncObject {
-	props: string[];
+	props: ApiObjectProps;
 	options: any;
 
 	constructor(
@@ -27,7 +29,7 @@ export class ApiObject implements AsyncObject {
 		public parent: ApiClient,
 		public config: ApiObjectConfig
 	) {
-		this.props = config.props || [];
+		this.props = config.props || {};
 		this.options = config.options || {};
 	}
 
