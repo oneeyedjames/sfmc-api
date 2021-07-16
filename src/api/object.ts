@@ -35,7 +35,7 @@ export class ObjectApi {
 		console.log('GET', req.objName, new Date());
 		const time = Date.now();
 
-		const res = await asyncToPromise(req.get.bind(req));
+		const res = await asyncToPromise(req.get.bind(req))();
 
 		const length = Date.now() - time;
 		console.log('GET', req.objName, `${length} ms`);
