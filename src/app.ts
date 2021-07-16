@@ -1,5 +1,6 @@
 import { Server } from 'http';
 import * as EventEmitter from 'events';
+import * as jwt from 'jsonwebtoken';
 
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
@@ -11,6 +12,10 @@ export interface Address {
 	port: number;
 	family: string;
 	address: string;
+}
+
+export interface ApplicationConfig {
+	jwtSecret: string;
 }
 
 export class Application extends EventEmitter {
@@ -37,14 +42,15 @@ export class Application extends EventEmitter {
 		return address;
 	}
 
-	public constructor() {
+	public constructor(private config: ApplicationConfig) {
 		super();
 
 		this.application = express()
 		.use(bodyParser.json())
 		.use(bodyParser.urlencoded({ extended: false }))
 		.use(cookieParser())
-		.use(this.cors.bind(this));
+		.use(this.cors.bind(this))
+		.use(this.auth.bind(this));
 	}
 
 	public use(
@@ -117,10 +123,29 @@ export class Application extends EventEmitter {
 
 		resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
 			.header('Access-Control-Allow-Headers',
-				'Origin, X-Requested-With, Content-Type, Accept')
+				'Origin, X-Requested-With, Content-Type, Accept, Authorization')
 			.header('Access-Control-Allow-Credentials', 'true')
 			.header('Access-Control-Expose-Headers', 'Set-Cookie');
 
 		next();
+	}
+
+	private auth(req: Request, resp: Response, next: NextFunction) {
+		if (req.method === 'OPTIONS') return next();
+
+		const header = req.header('Authorization');
+		if (header === undefined) return resp.sendStatus(401);
+
+		const [scheme, token] = header.split(' ', 2);
+		if (scheme != 'Bearer' || token == '') return resp.sendStatus(401);
+
+		jwt.verify(token, this.config.jwtSecret, (err, claims) => {
+			if (err) {
+				resp.sendStatus(401);
+			} else {
+				console.log('CLAIMS', claims);
+				next();
+			}
+		});
 	}
 }

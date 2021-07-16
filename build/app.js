@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Application = void 0;
 const EventEmitter = require("events");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 class Application extends EventEmitter {
-    constructor() {
+    constructor(config) {
         super();
+        this.config = config;
         this.corsHosts = [
             'http://localhost:4200'
         ];
@@ -15,7 +17,8 @@ class Application extends EventEmitter {
             .use(bodyParser.json())
             .use(bodyParser.urlencoded({ extended: false }))
             .use(cookieParser())
-            .use(this.cors.bind(this));
+            .use(this.cors.bind(this))
+            .use(this.auth.bind(this));
     }
     get address() {
         if (!this.server)
@@ -73,10 +76,29 @@ class Application extends EventEmitter {
             resp.header('Access-Control-Allow-Origin', origin);
         }
         resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-            .header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+            .header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
             .header('Access-Control-Allow-Credentials', 'true')
             .header('Access-Control-Expose-Headers', 'Set-Cookie');
         next();
+    }
+    auth(req, resp, next) {
+        if (req.method === 'OPTIONS')
+            return next();
+        const header = req.header('Authorization');
+        if (header === undefined)
+            return resp.sendStatus(401);
+        const [scheme, token] = header.split(' ', 2);
+        if (scheme != 'Bearer' || token == '')
+            return resp.sendStatus(401);
+        jwt.verify(token, this.config.jwtSecret, (err, claims) => {
+            if (err) {
+                resp.sendStatus(401);
+            }
+            else {
+                console.log('CLAIMS', claims);
+                next();
+            }
+        });
     }
 }
 exports.Application = Application;

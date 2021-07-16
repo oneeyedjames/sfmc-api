@@ -13,8 +13,7 @@ const config = {
 	subdomain: process.env.ET_SUBDOMAIN
 };
 
-
-const app = new Application();
+const app = new Application({ jwtSecret: process.env.JWT_SECRET});
 const api = new ApiClient(config);
 
 app.use('/api', api.router)

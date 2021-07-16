@@ -11,7 +11,7 @@ const config = {
     accountId: process.env.ET_ACCOUNT_ID,
     subdomain: process.env.ET_SUBDOMAIN
 };
-const app = new app_1.Application();
+const app = new app_1.Application({ jwtSecret: process.env.JWT_SECRET });
 const api = new api_1.ApiClient(config);
 app.use('/api', api.router)
     .listen(process.env.HTTP_PORT)
