@@ -36,7 +36,7 @@ class ObjectApi {
             }
             console.log('GET', req.objName, new Date());
             const time = Date.now();
-            const res = yield async_1.asyncToPromise(req.get.bind(req));
+            const res = yield async_1.asyncToPromise(req.get.bind(req))();
             const length = Date.now() - time;
             console.log('GET', req.objName, `${length} ms`);
             // if (length > 1000) {
