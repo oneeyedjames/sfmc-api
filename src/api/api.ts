@@ -1,6 +1,6 @@
 import * as ApiClient from 'sfmc-fuelsdk-node';
 
-import { AsyncObject, AsyncCallback } from './async';
+import { AsyncObject, AsyncCallback } from '../async';
 
 export type ApiObjectConfig = {
 	props?: string[];

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ObjectApi = void 0;
-const async_1 = require("./async");
+const async_1 = require("../async");
 class ObjectApi {
     constructor(getObject, props = []) {
         this.getObject = getObject;

@@ -1,4 +1,4 @@
-import { asyncToPromise } from './async';
+import { asyncToPromise } from '../async';
 
 import {
 	ApiObject,
