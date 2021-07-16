@@ -1,4 +1,5 @@
 import { asyncToPromise } from '../async';
+import { Cache } from '../cache'
 
 import {
 	ApiObject,
@@ -8,8 +9,7 @@ import {
 } from './api';
 
 export class ObjectApi {
-	private cache: {[key:string]:string} = {};
-	private cacheTTL = 900000; // 15 minutes
+	private cache = new Cache();
 
 	constructor(
 		protected getObject: ApiObjectFactory,
@@ -27,10 +27,9 @@ export class ObjectApi {
 
 	protected async toPromise<T = any>(req: ApiObject) {
 		const key = JSON.stringify(req.config);
-		if (this.cache[key] !== undefined) {
-			console.log('CACHE', req.objName, new Date());
-			return JSON.parse(this.cache[key]) as T[];
-		}
+
+		if (this.cache.isset(key))
+			return this.cache.get<T[]>(key).payload;
 
 		console.log('GET', req.objName, new Date());
 		const time = Date.now();
@@ -46,8 +45,7 @@ export class ObjectApi {
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {
-			setTimeout(() => delete this.cache[key], this.cacheTTL);
-			this.cache[key] = JSON.stringify(res.body.Results);
+			this.cache.set(key, res.body.Results as T[]);
 			return res.body.Results as T[];
 		} else {
 			throw new Error(res.error || res);

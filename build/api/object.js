@@ -11,12 +11,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ObjectApi = void 0;
 const async_1 = require("../async");
+const cache_1 = require("../cache");
 class ObjectApi {
     constructor(getObject, props = []) {
         this.getObject = getObject;
         this.props = props;
-        this.cache = {};
-        this.cacheTTL = 900000; // 15 minutes
+        this.cache = new cache_1.Cache();
     }
     get(value, field = 'ID') {
         if (this.getObject !== undefined) {
@@ -30,10 +30,8 @@ class ObjectApi {
     toPromise(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const key = JSON.stringify(req.config);
-            if (this.cache[key] !== undefined) {
-                console.log('CACHE', req.objName, new Date());
-                return JSON.parse(this.cache[key]);
-            }
+            if (this.cache.isset(key))
+                return this.cache.get(key).payload;
             console.log('GET', req.objName, new Date());
             const time = Date.now();
             const res = yield async_1.asyncToPromise(req.get.bind(req))();
@@ -44,8 +42,7 @@ class ObjectApi {
             // }
             if (res.body.OverallStatus == 'OK' ||
                 res.body.OverallStatus == 'MoreDataAvailable') {
-                setTimeout(() => delete this.cache[key], this.cacheTTL);
-                this.cache[key] = JSON.stringify(res.body.Results);
+                this.cache.set(key, res.body.Results);
                 return res.body.Results;
             }
             else {
