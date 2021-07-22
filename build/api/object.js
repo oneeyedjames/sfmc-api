@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ObjectApi = void 0;
 const async_1 = require("../async");
@@ -27,25 +18,23 @@ class ObjectApi {
             return Promise.reject('No API Object');
         }
     }
-    getPromise(obj) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const key = JSON.stringify(obj.config);
-            if (this.cache.isset(key))
-                return this.cache.get(key).payload;
-            console.log('GET', obj.objName, new Date());
-            const time = Date.now();
-            const res = yield async_1.asyncToPromise(obj.get.bind(obj))();
-            const length = Date.now() - time;
-            console.log('GET', obj.objName, `${length} ms`);
-            if (res.body.OverallStatus == 'OK' ||
-                res.body.OverallStatus == 'MoreDataAvailable') {
-                this.cache.set(key, res.body.Results);
-                return res.body.Results;
-            }
-            else {
-                throw new Error(res.error || res);
-            }
-        });
+    async getPromise(obj) {
+        const key = JSON.stringify(obj.config);
+        if (this.cache.isset(key))
+            return this.cache.get(key).payload;
+        console.log('GET', obj.objName, new Date());
+        const time = Date.now();
+        const res = await async_1.asyncToPromise(obj.get.bind(obj))();
+        const length = Date.now() - time;
+        console.log('GET', obj.objName, `${length} ms`);
+        if (res.body.OverallStatus == 'OK' ||
+            res.body.OverallStatus == 'MoreDataAvailable') {
+            this.cache.set(key, res.body.Results);
+            return res.body.Results;
+        }
+        else {
+            throw new Error(res.error || res);
+        }
     }
     getConfig(value, field = 'ID') {
         const config = { props: this.props };

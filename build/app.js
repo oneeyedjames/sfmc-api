@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Application = void 0;
 const EventEmitter = require("events");
-const jwt = require("jsonwebtoken");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const jwt_1 = require("./jwt");
 class Application extends EventEmitter {
     constructor(config) {
         super();
@@ -13,10 +13,12 @@ class Application extends EventEmitter {
         this.corsHosts = [
             'http://localhost:4200'
         ];
+        this.jwt = new jwt_1.JwtAuthorizer('SFMC', config.jwtSecret);
         this.application = express()
             .use(bodyParser.json())
             .use(bodyParser.urlencoded({ extended: false }))
             .use(cookieParser())
+            .use(this.jwt.authenticate)
             .use(this.cors.bind(this))
             .use(this.auth.bind(this));
     }
@@ -84,21 +86,9 @@ class Application extends EventEmitter {
     auth(req, resp, next) {
         if (req.method === 'OPTIONS')
             return next();
-        const header = req.header('Authorization');
-        if (header === undefined)
+        if (req.jwt === undefined)
             return resp.sendStatus(401);
-        const [scheme, token] = header.split(' ', 2);
-        if (scheme != 'Bearer' || token == '')
-            return resp.sendStatus(401);
-        jwt.verify(token, this.config.jwtSecret, (err, claims) => {
-            if (err) {
-                resp.sendStatus(401);
-            }
-            else {
-                console.log('CLAIMS', claims);
-                next();
-            }
-        });
+        next();
     }
 }
 exports.Application = Application;

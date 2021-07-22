@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataExtApi = void 0;
 const object_1 = require("./object");
@@ -17,21 +8,16 @@ class DataExtApi extends object_1.ObjectApi {
         this.extName = extName;
         this.propMap = propMap;
     }
-    get(value, field = 'Id') {
-        const _super = Object.create(null, {
-            get: { get: () => super.get }
-        });
-        return __awaiter(this, void 0, void 0, function* () {
-            const rows = yield _super.get.call(this, value, field);
-            return rows.map(row => {
-                const data = {};
-                row.Properties.Property.forEach((prop) => {
-                    let key = (this.propMap[prop.Name] || prop.Name);
-                    key = key.replace(/__c$/, '').replace('_', '').replace('_', '');
-                    data[key] = prop.Value;
-                });
-                return data;
+    async get(value, field = 'Id') {
+        const rows = await super.get(value, field);
+        return rows.map(row => {
+            const data = {};
+            row.Properties.Property.forEach((prop) => {
+                let key = (this.propMap[prop.Name] || prop.Name);
+                key = key.replace(/__c$/, '').replace('_', '').replace('_', '');
+                data[key] = prop.Value;
             });
+            return data;
         });
     }
     getConfig(value, field = 'Id') {

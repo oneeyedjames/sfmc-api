@@ -7,6 +7,7 @@ import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { JwtAuthorizer } from './jwt';
 
 export interface Address {
 	port: number;
@@ -25,6 +26,8 @@ export class Application extends EventEmitter {
 	private corsHosts: string[] = [
 		'http://localhost:4200'
 	];
+
+	private jwt: JwtAuthorizer;
 
 	public get address(): Address {
 		if (!this.server) return null;
@@ -45,10 +48,13 @@ export class Application extends EventEmitter {
 	public constructor(private config: ApplicationConfig) {
 		super();
 
+		this.jwt = new JwtAuthorizer('SFMC', config.jwtSecret);
+
 		this.application = express()
 		.use(bodyParser.json())
 		.use(bodyParser.urlencoded({ extended: false }))
 		.use(cookieParser())
+		.use(this.jwt.authenticate)
 		.use(this.cors.bind(this))
 		.use(this.auth.bind(this));
 	}
@@ -132,20 +138,8 @@ export class Application extends EventEmitter {
 
 	private auth(req: Request, resp: Response, next: NextFunction) {
 		if (req.method === 'OPTIONS') return next();
+		if (req.jwt === undefined) return resp.sendStatus(401);
 
-		const header = req.header('Authorization');
-		if (header === undefined) return resp.sendStatus(401);
-
-		const [scheme, token] = header.split(' ', 2);
-		if (scheme != 'Bearer' || token == '') return resp.sendStatus(401);
-
-		jwt.verify(token, this.config.jwtSecret, (err, claims) => {
-			if (err) {
-				resp.sendStatus(401);
-			} else {
-				console.log('CLAIMS', claims);
-				next();
-			}
-		});
+		next();
 	}
 }

@@ -117,6 +117,8 @@ export class ApiClient {
 	}
 
 	private async getSubscriberLists(subs: any[]) {
+		if (subs.length == 0) return subs;
+
 		const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey);
 
 		const lists = await this.lists.getBySubscriber(subKeys);
@@ -150,6 +152,8 @@ export class ApiClient {
 	}
 
 	private async getSubscriberEvents(subs: any[]) {
+		if (subs.length == 0) return subs;
+
 		const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey as string);
 
 		const allEvents = [].concat(...(await Promise.all([
