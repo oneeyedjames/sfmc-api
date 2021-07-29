@@ -7,10 +7,13 @@ declare module 'express' {
 	}
 }
 
-export class JwtAuthorizer {
-	authenticate: RequestHandler = (req, resp, next) => {
-		if (req.method === 'OPTIONS') return next();
+export type JwtAuthorizerConfig = {
+	issuer: string;
+	secret: Secret;
+}
 
+export class JwtAuthenticator {
+	authenticate: RequestHandler = (req, resp, next) => {
 		const header = req.header('Authorization');
 		if (header === undefined) next();
 
@@ -32,7 +35,7 @@ export class JwtAuthorizer {
 
 	private ttl = 3600;
 
-	constructor(private issuer: string, private secret: Secret) {}
+	constructor(private config: JwtAuthorizerConfig) {}
 
 	decode(token: string): Jwt {
 		return decode(token, { complete: true });
@@ -40,12 +43,8 @@ export class JwtAuthorizer {
 
 	verify(token: string): Promise<Jwt> {
 		return new Promise<Jwt>((resolve, reject) => {
-			verify(token, this.secret, {
-				complete: true
-			}, (err, jwt) => {
-				if (err) reject(err);
-				else resolve(jwt);
-			});
+			verify(token, this.config.secret, { complete: true },
+				(err, jwt) => err ? reject(err) : resolve(jwt));
 		});
 	}
 
@@ -73,25 +72,23 @@ export class JwtAuthorizer {
 			claims = {};
 
 		delete claims.iss;
-		delete claims.aud;
 		delete claims.sub;
+		delete claims.aud;
 		delete claims.exp;
 		delete claims.nbf;
 		delete claims.iat;
 
+		const options = {
+			issuer: this.config.issuer,
+			subject,
+			audience,
+			expiresIn: this.ttl,
+			notBefore: 0
+		};
+
 		return new Promise<string>((resolve, reject) => {
-			sign({
-				...claims
-			}, this.secret, {
-				issuer: this.issuer,
-				subject,
-				audience,
-				expiresIn: this.ttl,
-				notBefore: 0
-			}, (err, jwt) => {
-				if (err) reject(err);
-				else resolve(jwt);
-			});
+			sign(claims, this.config.secret, options,
+				(err, jwt) => err ? reject(err) : resolve(jwt));
 		});
 	}
 }

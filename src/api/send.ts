@@ -1,6 +1,4 @@
-import * as ApiClient from 'sfmc-fuelsdk-node';
-
-import { ApiObjectFactory, ApiObject, ApiObjectConfig } from './api';
+import { ApiClient, ApiObject, ApiObjectFactory, ApiObjectConfig } from './api';
 import { ObjectApi } from './object';
 
 export class SendApi extends ObjectApi {

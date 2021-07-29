@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApiObject = void 0;
+exports.ApiObject = exports.ApiClient = void 0;
+const ApiClient = require("sfmc-fuelsdk-node");
+exports.ApiClient = ApiClient;
 class ApiObject {
     constructor(objName, parent, config) {
         this.objName = objName;

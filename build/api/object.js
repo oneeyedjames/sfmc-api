@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ObjectApi = void 0;
 const async_1 = require("../async");
-const cache_1 = require("../cache");
 class ObjectApi {
+    // private cache = new Cache();
     constructor(getObject, props = []) {
         this.getObject = getObject;
         this.props = props;
-        this.cache = new cache_1.Cache();
     }
     get(value, field = 'ID') {
         if (this.getObject !== undefined) {
@@ -19,9 +18,10 @@ class ObjectApi {
         }
     }
     async getPromise(obj) {
-        const key = JSON.stringify(obj.config);
-        if (this.cache.isset(key))
-            return this.cache.get(key).payload;
+        // const key = JSON.stringify(obj.config);
+        //
+        // if (this.cache.isset(key))
+        // 	return this.cache.get<T[]>(key).payload;
         console.log('GET', obj.objName, new Date());
         const time = Date.now();
         const res = await async_1.asyncToPromise(obj.get.bind(obj))();
@@ -29,7 +29,7 @@ class ObjectApi {
         console.log('GET', obj.objName, `${length} ms`);
         if (res.body.OverallStatus == 'OK' ||
             res.body.OverallStatus == 'MoreDataAvailable') {
-            this.cache.set(key, res.body.Results);
+            // this.cache.set(key, res.body.Results as T[]);
             return res.body.Results;
         }
         else {

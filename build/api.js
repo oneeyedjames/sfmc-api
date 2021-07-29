@@ -80,7 +80,7 @@ class ApiClient {
             }
             const subKey = listSub.SubscriberKey;
             const sub = subs.find(sub => sub.SubscriberKey == subKey);
-            if (sub != undefined) {
+            if (sub !== undefined) {
                 sub.Lists = sub.Lists || [];
                 sub.Lists.push({
                     ListID: listSub.ListID,
@@ -118,7 +118,7 @@ class ApiClient {
             event.ObjectID = undefined;
             event.PartnerKey = undefined;
             event.SubscriberKey = undefined;
-            if (sub != undefined) {
+            if (sub !== undefined) {
                 sub.Events = sub.Events || [];
                 sub.Events.push(event);
             }

@@ -1,19 +1,20 @@
 import { asyncToPromise } from '../async';
-import { Cache } from '../cache'
+// import { Cache } from '../cache'
 
 import {
 	ApiObject,
 	ApiObjectFactory,
 	ApiObjectConfig,
-	ApiObjectFilter
+	ApiObjectFilter,
+	ApiObjectProps
 } from './api';
 
 export class ObjectApi {
-	private cache = new Cache();
+	// private cache = new Cache();
 
 	constructor(
 		protected getObject: ApiObjectFactory,
-		protected props: string[] = []
+		protected props: ApiObjectProps = []
 	) {}
 
 	get(value?: string | string[], field = 'ID') {
@@ -26,10 +27,10 @@ export class ObjectApi {
 	}
 
 	protected async getPromise<T = any>(obj: ApiObject) {
-		const key = JSON.stringify(obj.config);
-
-		if (this.cache.isset(key))
-			return this.cache.get<T[]>(key).payload;
+		// const key = JSON.stringify(obj.config);
+		//
+		// if (this.cache.isset(key))
+		// 	return this.cache.get<T[]>(key).payload;
 
 		console.log('GET', obj.objName, new Date());
 		const time = Date.now();
@@ -41,7 +42,7 @@ export class ObjectApi {
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {
-			this.cache.set(key, res.body.Results as T[]);
+			// this.cache.set(key, res.body.Results as T[]);
 			return res.body.Results as T[];
 		} else {
 			throw new Error(res.error || res);

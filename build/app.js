@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Application = void 0;
 const EventEmitter = require("events");
 const express = require("express");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
 const jwt_1 = require("./jwt");
 class Application extends EventEmitter {
     constructor(config) {
@@ -13,14 +11,16 @@ class Application extends EventEmitter {
         this.corsHosts = [
             'http://localhost:4200'
         ];
-        this.jwt = new jwt_1.JwtAuthorizer('SFMC', config.jwtSecret);
+        this.jwt = new jwt_1.JwtAuthenticator({
+            issuer: 'SFMC',
+            secret: config.jwtSecret
+        });
         this.application = express()
-            .use(bodyParser.json())
-            .use(bodyParser.urlencoded({ extended: false }))
-            .use(cookieParser())
+            .use(express.urlencoded({ extended: false }))
+            .use(express.json())
+            .use(cors(this.corsHosts))
             .use(this.jwt.authenticate)
-            .use(this.cors.bind(this))
-            .use(this.auth.bind(this));
+            .use(auth);
     }
     get address() {
         if (!this.server)
@@ -72,23 +72,28 @@ class Application extends EventEmitter {
         let port = (typeof val === 'string') ? parseInt(val, 10) : val;
         return isNaN(port) ? val : port;
     }
-    cors(req, resp, next) {
-        let origin = req.headers.origin;
-        if (this.corsHosts.indexOf(origin) !== -1) {
+}
+exports.Application = Application;
+function auth(req, resp, next) {
+    if (req.method === 'OPTIONS')
+        return next();
+    if (req.jwt === undefined)
+        return resp.sendStatus(401);
+    // this.jwt.sign(req.jwt.payload.aud, req.jwt.payload).then(jwt => {
+    // 	console.log(jwt, this.jwt.decode(jwt));
+    // 	next();
+    // });
+    next();
+}
+function cors(hosts) {
+    return (req, resp, next) => {
+        const origin = req.headers.origin;
+        if (hosts.indexOf(origin) !== -1)
             resp.header('Access-Control-Allow-Origin', origin);
-        }
         resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
             .header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
             .header('Access-Control-Allow-Credentials', 'true')
             .header('Access-Control-Expose-Headers', 'Set-Cookie');
         next();
-    }
-    auth(req, resp, next) {
-        if (req.method === 'OPTIONS')
-            return next();
-        if (req.jwt === undefined)
-            return resp.sendStatus(401);
-        next();
-    }
+    };
 }
-exports.Application = Application;

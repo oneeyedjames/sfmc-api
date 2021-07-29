@@ -109,11 +109,18 @@ export class ApiClient {
 		this.unsubEvent = new EventApi(cfg => this.client.unsubEvent(cfg),
 			EventApi.UnsubProps);
 
-		this.contacts = new DataExtApi(cfg => this.client.dataExtensionRow(cfg),
-			DataExtApi.ContactType, DataExtApi.ContactProps, DataExtApi.ContactPropMap);
+		this.contacts = new DataExtApi(
+			cfg => this.client.dataExtensionRow(cfg),
+			DataExtApi.ContactType,
+			DataExtApi.ContactProps,
+			DataExtApi.ContactPropMap);
 
-		this.subscriptions = new DataExtApi(cfg => this.client.dataExtensionRow(cfg),
-			DataExtApi.SubscriptionType, DataExtApi.SubscriptionProps, DataExtApi.SubscriptionPropMap);
+		this.subscriptions = new DataExtApi(
+			cfg => this.client.dataExtensionRow(cfg),
+			DataExtApi.SubscriptionType,
+			DataExtApi.SubscriptionProps,
+			DataExtApi.SubscriptionPropMap
+		);
 	}
 
 	private async getSubscriberLists(subs: any[]) {
@@ -133,7 +140,7 @@ export class ApiClient {
 			const subKey = listSub.SubscriberKey as string;
 			const sub = subs.find(sub => sub.SubscriberKey == subKey);
 
-			if (sub != undefined) {
+			if (sub !== undefined) {
 				sub.Lists = sub.Lists || [];
 				sub.Lists.push({
 					ListID: listSub.ListID,
@@ -179,7 +186,7 @@ export class ApiClient {
 			event.PartnerKey = undefined;
 			event.SubscriberKey = undefined;
 
-			if (sub != undefined) {
+			if (sub !== undefined) {
 				sub.Events = sub.Events || [];
 				sub.Events.push(event);
 			}

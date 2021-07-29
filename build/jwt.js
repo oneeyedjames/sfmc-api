@@ -1,14 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JwtAuthorizer = void 0;
+exports.JwtAuthenticator = void 0;
 const jsonwebtoken_1 = require("jsonwebtoken");
-class JwtAuthorizer {
-    constructor(issuer, secret) {
-        this.issuer = issuer;
-        this.secret = secret;
+class JwtAuthenticator {
+    constructor(config) {
+        this.config = config;
         this.authenticate = (req, resp, next) => {
-            if (req.method === 'OPTIONS')
-                return next();
             const header = req.header('Authorization');
             if (header === undefined)
                 next();
@@ -34,14 +31,7 @@ class JwtAuthorizer {
     }
     verify(token) {
         return new Promise((resolve, reject) => {
-            jsonwebtoken_1.verify(token, this.secret, {
-                complete: true
-            }, (err, jwt) => {
-                if (err)
-                    reject(err);
-                else
-                    resolve(jwt);
-            });
+            jsonwebtoken_1.verify(token, this.config.secret, { complete: true }, (err, jwt) => err ? reject(err) : resolve(jwt));
         });
     }
     sign(audience, subjectOrClaims, claims) {
@@ -59,27 +49,21 @@ class JwtAuthorizer {
         if (claims === undefined)
             claims = {};
         delete claims.iss;
-        delete claims.aud;
         delete claims.sub;
+        delete claims.aud;
         delete claims.exp;
         delete claims.nbf;
         delete claims.iat;
+        const options = {
+            issuer: this.config.issuer,
+            subject,
+            audience,
+            expiresIn: this.ttl,
+            notBefore: 0
+        };
         return new Promise((resolve, reject) => {
-            jsonwebtoken_1.sign({
-                ...claims
-            }, this.secret, {
-                issuer: this.issuer,
-                subject,
-                audience,
-                expiresIn: this.ttl,
-                notBefore: 0
-            }, (err, jwt) => {
-                if (err)
-                    reject(err);
-                else
-                    resolve(jwt);
-            });
+            jsonwebtoken_1.sign(claims, this.config.secret, options, (err, jwt) => err ? reject(err) : resolve(jwt));
         });
     }
 }
-exports.JwtAuthorizer = JwtAuthorizer;
+exports.JwtAuthenticator = JwtAuthenticator;

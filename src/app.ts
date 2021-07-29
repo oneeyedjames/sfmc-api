@@ -1,13 +1,9 @@
 import { Server } from 'http';
 import * as EventEmitter from 'events';
-import * as jwt from 'jsonwebtoken';
-
 import * as express from 'express';
-import * as bodyParser from 'body-parser';
-import * as cookieParser from 'cookie-parser';
 
-import { Router, Request, Response, NextFunction } from 'express';
-import { JwtAuthorizer } from './jwt';
+import { Router, RequestHandler, Request, Response, NextFunction } from 'express';
+import { JwtAuthenticator } from './jwt';
 
 export interface Address {
 	port: number;
@@ -27,7 +23,7 @@ export class Application extends EventEmitter {
 		'http://localhost:4200'
 	];
 
-	private jwt: JwtAuthorizer;
+	private jwt: JwtAuthenticator;
 
 	public get address(): Address {
 		if (!this.server) return null;
@@ -48,15 +44,17 @@ export class Application extends EventEmitter {
 	public constructor(private config: ApplicationConfig) {
 		super();
 
-		this.jwt = new JwtAuthorizer('SFMC', config.jwtSecret);
+		this.jwt = new JwtAuthenticator({
+			issuer: 'SFMC',
+			secret: config.jwtSecret
+		});
 
 		this.application = express()
-		.use(bodyParser.json())
-		.use(bodyParser.urlencoded({ extended: false }))
-		.use(cookieParser())
+		.use(express.urlencoded({ extended: false }))
+		.use(express.json())
+		.use(cors(this.corsHosts))
 		.use(this.jwt.authenticate)
-		.use(this.cors.bind(this))
-		.use(this.auth.bind(this));
+		.use(auth);
 	}
 
 	public use(
@@ -85,7 +83,7 @@ export class Application extends EventEmitter {
 		return this;
 	}
 
-	public listen(port: number|string): Promise<Address> {
+	public listen(port: number | string): Promise<Address> {
 		if (this.server && this.server.listening)
 			return Promise.resolve(this.address);
 
@@ -114,31 +112,37 @@ export class Application extends EventEmitter {
 		}
 	}
 
-	private normalizePort(val: number|string): number|string {
+	private normalizePort(val: number | string): number | string {
 		let port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
 
 		return isNaN(port) ? val : port;
 	}
+}
 
-	private cors(req: Request, resp: Response, next: NextFunction) {
-		let origin = req.headers.origin as string;
+function auth(req: Request, resp: Response, next: NextFunction) {
+	if (req.method === 'OPTIONS') return next();
+	if (req.jwt === undefined) return resp.sendStatus(401);
 
-		if (this.corsHosts.indexOf(origin) !== -1) {
+	// this.jwt.sign(req.jwt.payload.aud, req.jwt.payload).then(jwt => {
+	// 	console.log(jwt, this.jwt.decode(jwt));
+	// 	next();
+	// });
+
+	next();
+}
+
+function cors(hosts: string[]): RequestHandler {
+	return (req: Request, resp: Response, next: NextFunction) => {
+		const origin = req.headers.origin as string;
+
+		if (hosts.indexOf(origin) !== -1)
 			resp.header('Access-Control-Allow-Origin', origin);
-		}
 
 		resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
 			.header('Access-Control-Allow-Headers',
 				'Origin, X-Requested-With, Content-Type, Accept, Authorization')
 			.header('Access-Control-Allow-Credentials', 'true')
 			.header('Access-Control-Expose-Headers', 'Set-Cookie');
-
-		next();
-	}
-
-	private auth(req: Request, resp: Response, next: NextFunction) {
-		if (req.method === 'OPTIONS') return next();
-		if (req.jwt === undefined) return resp.sendStatus(401);
 
 		next();
 	}

@@ -9,6 +9,8 @@ export type AsyncObject<T = any> = {
 }
 
 export function asyncToPromise<T = any>(fn: AsyncFunction<T>) {
-	return () => new Promise<T>((resolve, reject) =>
-		fn((err: any, res?: T) => err ? reject(err) : resolve(res)));
+	return (...args: any[]) => new Promise<T>((resolve, reject) => {
+		fn.apply(null, [...args, (err: any, res?: T) =>
+			err ? reject(err) : resolve(res)]);
+	});
 }
