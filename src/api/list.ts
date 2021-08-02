@@ -18,6 +18,12 @@ export class ListApi extends ObjectApi {
 		this.listSubApi = new ListSubscriberApi(subFactory);
 	}
 
+	async get(value?: string | string[], field = 'ID') {
+		const lists = await super.get(value, field);
+		lists.forEach(this.populateListCode);
+		return lists;
+	}
+
 	async getBySubscriber(value: string | string[], field = 'SubscriberKey') {
 		const listSubs = await this.listSubApi.get(value, field);
 		const listIds = Array.from(new Set<string>(listSubs.map(ls => ls.ListID)));
@@ -29,6 +35,12 @@ export class ListApi extends ObjectApi {
 		});
 
 		return listSubs;
+	}
+
+	populateListCode(list: any) {
+		const name = list.ListName as string;
+		const keys = name.match(/^(.+) - .+$/i);
+		list.ListCode = keys ? keys[1] : undefined;
 	}
 }
 

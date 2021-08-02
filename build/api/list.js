@@ -7,6 +7,11 @@ class ListApi extends object_1.ObjectApi {
         super(factory, ListApi.Props);
         this.listSubApi = new ListSubscriberApi(subFactory);
     }
+    async get(value, field = 'ID') {
+        const lists = await super.get(value, field);
+        lists.forEach(this.populateListCode);
+        return lists;
+    }
     async getBySubscriber(value, field = 'SubscriberKey') {
         const listSubs = await this.listSubApi.get(value, field);
         const listIds = Array.from(new Set(listSubs.map(ls => ls.ListID)));
@@ -16,6 +21,11 @@ class ListApi extends object_1.ObjectApi {
                 .forEach(listSub => listSub.List = list);
         });
         return listSubs;
+    }
+    populateListCode(list) {
+        const name = list.ListName;
+        const keys = name.match(/^(.+) - .+$/i);
+        list.ListCode = keys ? keys[1] : undefined;
     }
 }
 exports.ListApi = ListApi;
