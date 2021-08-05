@@ -9,7 +9,7 @@ class ListApi extends object_1.ObjectApi {
     }
     async get(value, field = 'ID') {
         const lists = await super.get(value, field);
-        lists.forEach(this.populateListCode);
+        lists.forEach(ListApi.populateListCode);
         return lists;
     }
     async getBySubscriber(value, field = 'SubscriberKey') {
@@ -22,7 +22,7 @@ class ListApi extends object_1.ObjectApi {
         });
         return listSubs;
     }
-    populateListCode(list) {
+    static populateListCode(list) {
         const name = list.ListName;
         const keys = name.match(/^(.+) - .+$/i);
         list.ListCode = keys ? keys[1] : undefined;

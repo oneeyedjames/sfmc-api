@@ -20,7 +20,7 @@ export class ListApi extends ObjectApi {
 
 	async get(value?: string | string[], field = 'ID') {
 		const lists = await super.get(value, field);
-		lists.forEach(this.populateListCode);
+		lists.forEach(ListApi.populateListCode);
 		return lists;
 	}
 
@@ -37,7 +37,7 @@ export class ListApi extends ObjectApi {
 		return listSubs;
 	}
 
-	populateListCode(list: any) {
+	static populateListCode(list: any) {
 		const name = list.ListName as string;
 		const keys = name.match(/^(.+) - .+$/i);
 		list.ListCode = keys ? keys[1] : undefined;

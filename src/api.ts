@@ -7,6 +7,25 @@ import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi } from './api/event';
 import { DataExtApi } from './api/dataExt';
 
+type MapFn<T, U> = {
+	(value: T, index: number, array: T[]): U;
+}
+
+declare global {
+	interface Array<T> {
+		unique(): Array<T>;
+		mapUnique<U>(fn: MapFn<T, U>): Array<U>;
+	}
+}
+
+Array.prototype.unique = function<T>(this: Array<T>) {
+	return Array.from(new Set<T>(this));
+}
+
+Array.prototype.mapUnique = function<T, U>(this: Array<T>, fn: MapFn<T, U>) {
+	return this.map(fn).unique();
+}
+
 export type ApiClientConfig = {
 	accountId: string;
 	clientId: string;
@@ -43,17 +62,28 @@ export class ApiClient {
 
 		this.router = Router()
 		.get('/subscribers', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req);
+			const [value, field] = this.getSearchParams(req);
 			this.subscribers.get(value, field)
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
+
+		.get('/subscriber/:subKey', (req: Request, resp: Response) => {
+			this.subscribers.get(req.params.subKey, 'SubscriberKey')
+			.then(res => this.getSubscriberLists(res))
+			.then(res => this.getSubscriberEvents(res))
+			.then(res => res.map(this.formatSubscriber.bind(this)))
+			.then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
+			.catch(this.handleError(resp));
+		})
+
 		.get('/subscriber/:subKey/lists', (req: Request, resp: Response) => {
 			this.lists.getBySubscriber(req.params.subKey)
 			.then(res => res.map(this.formatSubscriberList))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
+
 		.get('/subscriber/:subKey/events', (req: Request, resp: Response) => {
 			const subKey = req.params.subKey as string;
 
@@ -72,43 +102,19 @@ export class ApiClient {
 		})
 
 		.get('/contacts', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req, false);
+			const [value, field] = this.getSearchParams(req, false);
 			this.contacts.get(value, field)
 			.then(res => resp.json(res))
+			.catch(this.handleError(resp));
+		})
+		.get('/contact/:id', (req: Request, resp: Response) => {
+			this.contacts.get(req.params.id, 'Id')
+			.then(res => this.getContactSubscriptions(res))
+			.then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
 			.catch(this.handleError(resp));
 		})
 		.get('/contact/:id/subscriptions', (req: Request, resp: Response) => {
 			this.subscriptions.get(req.params.id, 'Contact__c')
-			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
-		})
-
-		.get('/subscriber/lists', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req);
-			this.subscribers.get(value, field)
-			.then(res => this.getSubscriberLists(res))
-			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
-		})
-		.get('/subscriber/events', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req);
-			this.subscribers.get(value, field)
-			.then(res => this.getSubscriberEvents(res))
-			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
-		})
-		.get('/subscriber/complete', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req);
-			this.subscribers.get(value, field)
-			.then(res => this.getSubscriberLists(res))
-			.then(res => this.getSubscriberEvents(res))
-			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
-		})
-		.get('/contact/subscriptions', (req: Request, resp: Response) => {
-			const [value, field] = this.getParams(req, false);
-			this.contacts.get(value, field)
-			.then(res => this.getContactSubscriptions(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		});
@@ -142,7 +148,8 @@ export class ApiClient {
 			cfg => this.client.dataExtensionRow(cfg),
 			DataExtApi.ContactType,
 			DataExtApi.ContactProps,
-			DataExtApi.ContactPropMap);
+			DataExtApi.ContactPropMap
+		);
 
 		this.subscriptions = new DataExtApi(
 			cfg => this.client.dataExtensionRow(cfg),
@@ -155,18 +162,17 @@ export class ApiClient {
 	private async getSubscriberLists(subs: any[]) {
 		if (subs.length == 0) return subs;
 
-		const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey);
+		subs.forEach(sub => sub.Lists = []);
 
-		const lists = await this.lists.getBySubscriber(subKeys);
+		const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
+		const listSubs = await this.lists.getBySubscriber(subKeys);
 
-		lists.forEach(listSub => {
+		listSubs.forEach(listSub => {
 			const subKey = listSub.SubscriberKey as string;
 			const sub = subs.find(sub => sub.SubscriberKey == subKey);
 
-			if (sub !== undefined) {
-				sub.Lists = sub.Lists || [];
-				sub.Lists.push(this.formatSubscriberList(listSub));
-			}
+			if (sub !== undefined)
+				sub.Lists.push(listSub);
 		});
 
 		return subs;
@@ -175,9 +181,10 @@ export class ApiClient {
 	private async getSubscriberEvents(subs: any[]) {
 		if (subs.length == 0) return subs;
 
-		const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey as string);
+		subs.forEach(sub => sub.Events = []);
 
-		const allEvents = [].concat(...(await Promise.all([
+		const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
+		const events = [].concat(...(await Promise.all([
 			this.bounceEvent.get(subKeys, 'SubscriberKey'),
 			this.clickEvent.get(subKeys, 'SubscriberKey'),
 			this.openEvent.get(subKeys, 'SubscriberKey'),
@@ -185,79 +192,56 @@ export class ApiClient {
 			this.unsubEvent.get(subKeys, 'SubscriberKey')
 		])));
 
-		if (allEvents.length == 0) {
-			subs.forEach(sub => sub.Events = []);
-			return subs;
-		}
-
-		const sendIds = new Set<string>();
-
-		allEvents.forEach(event => {
+		events.forEach(event => {
 			const subKey = event.SubscriberKey as string;
 			const sub = subs.find(sub => sub.SubscriberKey == subKey);
 
-			event.ObjectID = undefined;
-			event.PartnerKey = undefined;
-			event.SubscriberKey = undefined;
-
-			if (sub !== undefined) {
-				sub.Events = sub.Events || [];
+			if (sub !== undefined)
 				sub.Events.push(event);
-			}
-
-			sendIds.add(event.SendID as string);
 		});
 
-		const allSends = await this.sends.get(Array.from(sendIds));
+		const sendIds = events.mapUnique<string>(e => e.SendID);
+		const sends = await this.sends.get(Array.from(sendIds));
 
-		allSends.forEach(send => {
-			const events = allEvents.filter(event => event.SendID == send.ID);
-
-			events.forEach(event => {
-				event.ListID = send.List.ID;
-				event.ListName = send.List.ListName;
-				event.EmailName = send.EmailName;
-			});
+		sends.forEach(send => {
+			events.filter(event => event.SendID == send.ID)
+			.forEach(event => event.Send = send);
 		});
 
 		return subs;
 	}
 
 	private async getContactSubscriptions(cons: any[]) {
-		const conIds = this.getUniqueSet(cons, con => con.Id as string);
+		if (cons.length == 0) return cons;
+
+		cons.forEach(con => con.Subscriptions = []);
+
+		const conIds = cons.mapUnique<string>(con => con.Id);
 		const subs = await this.subscriptions.get(conIds, 'Contact__c');
 
 		subs.forEach(sub => {
 			const con = cons.find(con => con.Id == sub.ContactId);
 
-			if (con !== undefined) {
-				con.Subscriptions = con.Subscriptions || [];
+			if (con !== undefined)
 				con.Subscriptions.push(sub);
-			}
 		});
 
 		return cons;
 	}
 
 	private async getEventLists(events: any[]) {
-		const sendIds = this.getUniqueSet(events, e => e.SendID as string);
+		const sendIds = events.mapUnique<string>(event => event.SendID);
 		const sends = await this.sends.get(sendIds);
 
 		sends.forEach(send => {
-			this.lists.populateListCode(send.List);
-
-			events.filter(e => e.SendID == send.ID).forEach(event => {
-				event.ListID = send.List.ID;
-				event.ListName = send.List.ListName;
-				event.ListCode = send.List.ListCode;
-				event.EmailName = send.EmailName;
-			});
+			events.filter(e => e.SendID == send.ID)
+			.forEach(event => event.Send = send);
 		});
 
 		return events;
 	}
 
-	private getParams(req: Request, mc = true): [string, string] {
+	private getSearchParams(req: Request, mc = true): [string, string] {
 		let value = req.query.key as string;
 		let field = mc ? 'SubscriberKey' : 'Id';
 
@@ -269,21 +253,37 @@ export class ApiClient {
 		return [value, field];
 	}
 
-	private getUniqueSet<T, V>(items: T[], cb: (item: T) => V) {
-		return Array.from(new Set<V>(items.map(cb)));
+	private formatSubscriber(sub: any) {
+		sub.ObjectID = undefined;
+		sub.PartnerKey = undefined;
+
+		if (sub.Lists !== undefined)
+			sub.Lists.forEach(this.formatSubscriberList);
+
+		if (sub.Events !== undefined)
+			sub.Events.forEach(this.formatSubscriberEvent);
+
+		return sub;
 	}
 
 	private formatSubscriberList(listSub: any) {
-		return {
-			ListID: listSub.ListID,
-			ListName: listSub.List.ListName,
-			ListCode: listSub.List.ListCode,
-			ListClassification: listSub.List.ListClassification,
-			Status: listSub.Status,
-			CreatedDate: listSub.CreatedDate,
-			ModifiedDate: listSub.ModifiedDate,
-			UnsubscribedDate: listSub.PartnerProperties.Value
-		};
+		listSub.ObjectID = undefined;
+		listSub.PartnerKey = undefined;
+		listSub.SubscriberKey = undefined;
+
+		if (listSub.List !== undefined) {
+			listSub.ListName = listSub.List.ListName;
+			listSub.ListCode = listSub.List.ListCode;
+			listSub.ListClassification = listSub.List.ListClassification;
+			listSub.List = undefined;
+		}
+
+		if (listSub.PartnerProperties !== undefined) {
+			listSub.UnsubscribedDate = listSub.PartnerProperties.Value;
+			listSub.PartnerProperties = undefined;
+		}
+
+		return listSub;
 	}
 
 	private formatSubscriberEvent(event: any) {
@@ -291,6 +291,14 @@ export class ApiClient {
 		event.PartnerKey = undefined;
 		event.SubscriberKey = undefined;
 		event.SendID = undefined;
+
+		if (event.Send !== undefined) {
+			event.ListID = event.Send.List.ID;
+			event.ListName = event.Send.List.ListName;
+			event.ListCode = event.Send.List.ListCode;
+			event.EmailName = event.Send.EmailName;
+			event.Send = undefined;
+		}
 
 		return event;
 	}

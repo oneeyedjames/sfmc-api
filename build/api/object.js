@@ -19,7 +19,6 @@ class ObjectApi {
     }
     async getPromise(obj) {
         // const key = JSON.stringify(obj.config);
-        //
         // if (this.cache.isset(key))
         // 	return this.cache.get<T[]>(key).payload;
         console.log('GET', obj.objName, new Date());
@@ -49,11 +48,14 @@ class ObjectApi {
             rightOperand: value
         };
         if (typeof value !== 'string') {
-            if (value.length > 1) {
-                filter.operator = 'IN';
+            if (value.length == 0) {
+                throw new Error('Filter array cannot is empty');
+            }
+            else if (value.length == 1) {
+                filter.rightOperand = value[0];
             }
             else {
-                filter.rightOperand = value[0];
+                filter.operator = 'IN';
             }
         }
         return filter;

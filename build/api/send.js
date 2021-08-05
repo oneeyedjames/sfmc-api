@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListSendObject = exports.SendObject = exports.ListSendApi = exports.SendApi = void 0;
 const api_1 = require("./api");
 const object_1 = require("./object");
+const list_1 = require("./list");
 class SendApi extends object_1.ObjectApi {
     constructor(factory, listFactory) {
         super(factory, SendApi.Props);
@@ -30,8 +31,10 @@ class ListSendApi extends object_1.ObjectApi {
     constructor(factory) {
         super(factory, ListSendApi.Props);
     }
-    get(value, field = 'SendID') {
-        return super.get(value, field);
+    async get(value, field = 'SendID') {
+        const listSends = await super.get(value, field);
+        listSends.forEach(listSend => list_1.ListApi.populateListCode(listSend.List));
+        return listSends;
     }
 }
 exports.ListSendApi = ListSendApi;

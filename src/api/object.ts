@@ -28,15 +28,12 @@ export class ObjectApi {
 
 	protected async getPromise<T = any>(obj: ApiObject) {
 		// const key = JSON.stringify(obj.config);
-		//
 		// if (this.cache.isset(key))
 		// 	return this.cache.get<T[]>(key).payload;
 
 		console.log('GET', obj.objName, new Date());
 		const time = Date.now();
-
 		const res = await asyncToPromise(obj.get.bind(obj))();
-
 		const length = Date.now() - time;
 		console.log('GET', obj.objName, `${length} ms`);
 
@@ -66,10 +63,12 @@ export class ObjectApi {
 		};
 
 		if (typeof value !== 'string') {
-			if (value.length > 1) {
-				filter.operator = 'IN';
-			} else {
+			if (value.length == 0) {
+				throw new Error('Filter array cannot is empty');
+			} else if (value.length == 1) {
 				filter.rightOperand = value[0];
+			} else {
+				filter.operator = 'IN';
 			}
 		}
 

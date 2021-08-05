@@ -1,5 +1,6 @@
 import { ApiClient, ApiObject, ApiObjectFactory, ApiObjectConfig } from './api';
 import { ObjectApi } from './object';
+import { ListApi } from './list';
 
 export class SendApi extends ObjectApi {
 	static readonly Props = [
@@ -41,8 +42,10 @@ export class ListSendApi extends ObjectApi {
 		super(factory, ListSendApi.Props);
 	}
 
-	get(value?: string | string[], field = 'SendID') {
-		return super.get(value, field);
+	async get(value?: string | string[], field = 'SendID') {
+		const listSends = await super.get(value, field);
+		listSends.forEach(listSend => ListApi.populateListCode(listSend.List));
+		return listSends;
 	}
 }
 

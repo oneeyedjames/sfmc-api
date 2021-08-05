@@ -8,7 +8,7 @@ class JwtAuthenticator {
         this.authenticate = (req, resp, next) => {
             const header = req.header('Authorization');
             if (header === undefined)
-                next();
+                return next();
             const [scheme, token] = header.split(' ', 2);
             if (scheme != 'JWT')
                 return next();

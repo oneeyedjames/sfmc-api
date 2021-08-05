@@ -15,7 +15,7 @@ export type JwtAuthorizerConfig = {
 export class JwtAuthenticator {
 	authenticate: RequestHandler = (req, resp, next) => {
 		const header = req.header('Authorization');
-		if (header === undefined) next();
+		if (header === undefined) return next();
 
 		const [scheme, token] = header.split(' ', 2);
 		if (scheme != 'JWT') return next();

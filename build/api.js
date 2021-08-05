@@ -8,6 +8,12 @@ const list_1 = require("./api/list");
 const send_1 = require("./api/send");
 const event_1 = require("./api/event");
 const dataExt_1 = require("./api/dataExt");
+Array.prototype.unique = function () {
+    return Array.from(new Set(this));
+};
+Array.prototype.mapUnique = function (fn) {
+    return this.map(fn).unique();
+};
 class ApiClient {
     constructor(config) {
         this.client = new ET_Client(config.clientId, config.clientSecret, undefined, {
@@ -16,9 +22,17 @@ class ApiClient {
         });
         this.router = express_1.Router()
             .get('/subscribers', (req, resp) => {
-            const [value, field] = this.getParams(req);
+            const [value, field] = this.getSearchParams(req);
             this.subscribers.get(value, field)
                 .then(res => resp.json(res))
+                .catch(this.handleError(resp));
+        })
+            .get('/subscriber/:subKey', (req, resp) => {
+            this.subscribers.get(req.params.subKey, 'SubscriberKey')
+                .then(res => this.getSubscriberLists(res))
+                .then(res => this.getSubscriberEvents(res))
+                .then(res => res.map(this.formatSubscriber.bind(this)))
+                .then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
                 .catch(this.handleError(resp));
         })
             .get('/subscriber/:subKey/lists', (req, resp) => {
@@ -43,42 +57,19 @@ class ApiClient {
                 .catch(this.handleError(resp));
         })
             .get('/contacts', (req, resp) => {
-            const [value, field] = this.getParams(req, false);
+            const [value, field] = this.getSearchParams(req, false);
             this.contacts.get(value, field)
                 .then(res => resp.json(res))
+                .catch(this.handleError(resp));
+        })
+            .get('/contact/:id', (req, resp) => {
+            this.contacts.get(req.params.id, 'Id')
+                .then(res => this.getContactSubscriptions(res))
+                .then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
                 .catch(this.handleError(resp));
         })
             .get('/contact/:id/subscriptions', (req, resp) => {
             this.subscriptions.get(req.params.id, 'Contact__c')
-                .then(res => resp.json(res))
-                .catch(this.handleError(resp));
-        })
-            .get('/subscriber/lists', (req, resp) => {
-            const [value, field] = this.getParams(req);
-            this.subscribers.get(value, field)
-                .then(res => this.getSubscriberLists(res))
-                .then(res => resp.json(res))
-                .catch(this.handleError(resp));
-        })
-            .get('/subscriber/events', (req, resp) => {
-            const [value, field] = this.getParams(req);
-            this.subscribers.get(value, field)
-                .then(res => this.getSubscriberEvents(res))
-                .then(res => resp.json(res))
-                .catch(this.handleError(resp));
-        })
-            .get('/subscriber/complete', (req, resp) => {
-            const [value, field] = this.getParams(req);
-            this.subscribers.get(value, field)
-                .then(res => this.getSubscriberLists(res))
-                .then(res => this.getSubscriberEvents(res))
-                .then(res => resp.json(res))
-                .catch(this.handleError(resp));
-        })
-            .get('/contact/subscriptions', (req, resp) => {
-            const [value, field] = this.getParams(req, false);
-            this.contacts.get(value, field)
-                .then(res => this.getContactSubscriptions(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         });
@@ -96,84 +87,66 @@ class ApiClient {
     async getSubscriberLists(subs) {
         if (subs.length == 0)
             return subs;
-        const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey);
-        const lists = await this.lists.getBySubscriber(subKeys);
-        lists.forEach(listSub => {
+        subs.forEach(sub => sub.Lists = []);
+        const subKeys = subs.mapUnique(sub => sub.SubscriberKey);
+        const listSubs = await this.lists.getBySubscriber(subKeys);
+        listSubs.forEach(listSub => {
             const subKey = listSub.SubscriberKey;
             const sub = subs.find(sub => sub.SubscriberKey == subKey);
-            if (sub !== undefined) {
-                sub.Lists = sub.Lists || [];
-                sub.Lists.push(this.formatSubscriberList(listSub));
-            }
+            if (sub !== undefined)
+                sub.Lists.push(listSub);
         });
         return subs;
     }
     async getSubscriberEvents(subs) {
         if (subs.length == 0)
             return subs;
-        const subKeys = this.getUniqueSet(subs, sub => sub.SubscriberKey);
-        const allEvents = [].concat(...(await Promise.all([
+        subs.forEach(sub => sub.Events = []);
+        const subKeys = subs.mapUnique(sub => sub.SubscriberKey);
+        const events = [].concat(...(await Promise.all([
             this.bounceEvent.get(subKeys, 'SubscriberKey'),
             this.clickEvent.get(subKeys, 'SubscriberKey'),
             this.openEvent.get(subKeys, 'SubscriberKey'),
             this.sentEvent.get(subKeys, 'SubscriberKey'),
             this.unsubEvent.get(subKeys, 'SubscriberKey')
         ])));
-        if (allEvents.length == 0) {
-            subs.forEach(sub => sub.Events = []);
-            return subs;
-        }
-        const sendIds = new Set();
-        allEvents.forEach(event => {
+        events.forEach(event => {
             const subKey = event.SubscriberKey;
             const sub = subs.find(sub => sub.SubscriberKey == subKey);
-            event.ObjectID = undefined;
-            event.PartnerKey = undefined;
-            event.SubscriberKey = undefined;
-            if (sub !== undefined) {
-                sub.Events = sub.Events || [];
+            if (sub !== undefined)
                 sub.Events.push(event);
-            }
-            sendIds.add(event.SendID);
         });
-        const allSends = await this.sends.get(Array.from(sendIds));
-        allSends.forEach(send => {
-            const events = allEvents.filter(event => event.SendID == send.ID);
-            events.forEach(event => {
-                event.ListID = send.List.ID;
-                event.ListName = send.List.ListName;
-                event.EmailName = send.EmailName;
-            });
+        const sendIds = events.mapUnique(e => e.SendID);
+        const sends = await this.sends.get(Array.from(sendIds));
+        sends.forEach(send => {
+            events.filter(event => event.SendID == send.ID)
+                .forEach(event => event.Send = send);
         });
         return subs;
     }
     async getContactSubscriptions(cons) {
-        const conIds = this.getUniqueSet(cons, con => con.Id);
+        if (cons.length == 0)
+            return cons;
+        cons.forEach(con => con.Subscriptions = []);
+        const conIds = cons.mapUnique(con => con.Id);
         const subs = await this.subscriptions.get(conIds, 'Contact__c');
         subs.forEach(sub => {
             const con = cons.find(con => con.Id == sub.ContactId);
-            if (con !== undefined) {
-                con.Subscriptions = con.Subscriptions || [];
+            if (con !== undefined)
                 con.Subscriptions.push(sub);
-            }
         });
         return cons;
     }
     async getEventLists(events) {
-        const sendIds = this.getUniqueSet(events, e => e.SendID);
+        const sendIds = events.mapUnique(event => event.SendID);
         const sends = await this.sends.get(sendIds);
         sends.forEach(send => {
-            this.lists.populateListCode(send.List);
-            events.filter(e => e.SendID == send.ID).forEach(event => {
-                event.ListID = send.List.ID;
-                event.ListName = send.List.ListName;
-                event.ListCode = send.List.ListCode;
-                event.EmailName = send.EmailName;
-            });
+            events.filter(e => e.SendID == send.ID)
+                .forEach(event => event.Send = send);
         });
         return events;
     }
-    getParams(req, mc = true) {
+    getSearchParams(req, mc = true) {
         let value = req.query.key;
         let field = mc ? 'SubscriberKey' : 'Id';
         if (value === undefined) {
@@ -182,26 +155,43 @@ class ApiClient {
         }
         return [value, field];
     }
-    getUniqueSet(items, cb) {
-        return Array.from(new Set(items.map(cb)));
+    formatSubscriber(sub) {
+        sub.ObjectID = undefined;
+        sub.PartnerKey = undefined;
+        if (sub.Lists !== undefined)
+            sub.Lists.forEach(this.formatSubscriberList);
+        if (sub.Events !== undefined)
+            sub.Events.forEach(this.formatSubscriberEvent);
+        return sub;
     }
     formatSubscriberList(listSub) {
-        return {
-            ListID: listSub.ListID,
-            ListName: listSub.List.ListName,
-            ListCode: listSub.List.ListCode,
-            ListClassification: listSub.List.ListClassification,
-            Status: listSub.Status,
-            CreatedDate: listSub.CreatedDate,
-            ModifiedDate: listSub.ModifiedDate,
-            UnsubscribedDate: listSub.PartnerProperties.Value
-        };
+        listSub.ObjectID = undefined;
+        listSub.PartnerKey = undefined;
+        listSub.SubscriberKey = undefined;
+        if (listSub.List !== undefined) {
+            listSub.ListName = listSub.List.ListName;
+            listSub.ListCode = listSub.List.ListCode;
+            listSub.ListClassification = listSub.List.ListClassification;
+            listSub.List = undefined;
+        }
+        if (listSub.PartnerProperties !== undefined) {
+            listSub.UnsubscribedDate = listSub.PartnerProperties.Value;
+            listSub.PartnerProperties = undefined;
+        }
+        return listSub;
     }
     formatSubscriberEvent(event) {
         event.ObjectID = undefined;
         event.PartnerKey = undefined;
         event.SubscriberKey = undefined;
         event.SendID = undefined;
+        if (event.Send !== undefined) {
+            event.ListID = event.Send.List.ID;
+            event.ListName = event.Send.List.ListName;
+            event.ListCode = event.Send.List.ListCode;
+            event.EmailName = event.Send.EmailName;
+            event.Send = undefined;
+        }
         return event;
     }
     handleError(resp) {

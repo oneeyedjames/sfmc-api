@@ -13,8 +13,8 @@ export type ApiObjectConfig = {
 
 export type ApiObjectFilter = {
 	operator: string;
-	leftOperand: string;
-	rightOperand: string | string[];
+	leftOperand: string | string[] | ApiObjectFilter;
+	rightOperand: string | string[] | ApiObjectFilter;
 }
 
 export type ApiObjectFactory = {
