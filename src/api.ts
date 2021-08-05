@@ -76,10 +76,30 @@ export class ApiClient {
 			.then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
 			.catch(this.handleError(resp));
 		})
+		.put('/subscriber/:subKey', (req: Request, resp: Response) => {
+			const props = {
+				SubscriberKey: req.params.subKey,
+				Status: req.body.Status
+			};
+
+			this.subscribers.put(props)
+			.then(res => resp.json(res))
+			.catch(this.handleError(resp));
+		})
 
 		.get('/subscriber/:subKey/lists', (req: Request, resp: Response) => {
 			this.lists.getBySubscriber(req.params.subKey)
 			.then(res => res.map(this.formatSubscriberList))
+			.then(res => resp.json(res))
+			.catch(this.handleError(resp));
+		})
+		.put('/subscriber/:subKey/lists', (req: Request, resp: Response) => {
+			const props = {
+				SubscriberKey: req.params.subKey,
+				Lists: req.body.Lists
+			};
+
+			this.subscribers.put(props)
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})

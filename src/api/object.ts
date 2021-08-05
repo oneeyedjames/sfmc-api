@@ -26,6 +26,16 @@ export class ObjectApi {
 		}
 	}
 
+	put(props: ApiObjectProps) {
+		if (this.getObject !== undefined) {
+			const config = this.getConfig();
+			config.props = props;
+			return this.putPromise(this.getObject(config));
+		} else {
+			return Promise.reject('No API Object');
+		}
+	}
+
 	protected async getPromise<T = any>(obj: ApiObject) {
 		// const key = JSON.stringify(obj.config);
 		// if (this.cache.isset(key))
@@ -41,6 +51,21 @@ export class ObjectApi {
 			res.body.OverallStatus == 'MoreDataAvailable') {
 			// this.cache.set(key, res.body.Results as T[]);
 			return res.body.Results as T[];
+		} else {
+			throw new Error(res.error || res);
+		}
+	}
+
+	protected async putPromise<T = any>(obj: ApiObject) {
+		console.log('PUT', obj.objName, new Date());
+		const time = Date.now();
+		const res = await asyncToPromise(obj.patch.bind(obj))();
+		const length = Date.now() - time;
+		console.log('PUT', obj.objName, `${length} ms`);
+		console.log(res);
+
+		if (res.body.OverallStatus == 'OK') {
+			return res.body.Results as T;
 		} else {
 			throw new Error(res.error || res);
 		}
