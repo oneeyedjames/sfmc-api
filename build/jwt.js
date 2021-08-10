@@ -1,18 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JwtAuthenticator = void 0;
+const express_1 = require("express");
 const jsonwebtoken_1 = require("jsonwebtoken");
 class JwtAuthenticator {
-    constructor(config) {
-        this.config = config;
-        this.authenticate = (req, resp, next) => {
+    constructor(provider) {
+        this.provider = provider;
+        this.router = express_1.Router().use((req, resp, next) => {
+            if (req.method === 'OPTIONS')
+                return next();
             const header = req.header('Authorization');
             if (header === undefined)
                 return next();
             const [scheme, token] = header.split(' ', 2);
             if (scheme != 'JWT')
                 return next();
-            this.verify(token)
+            const jwt = JwtAuthenticator.decode(token);
+            const clientId = (typeof jwt.payload.aud == 'string')
+                ? jwt.payload.aud : jwt.payload.aud[0];
+            this.provider.find(clientId)
+                .then(client => JwtAuthenticator.verify(token, client.secret))
                 .then(jwt => {
                 req.jwt = jwt;
                 next();
@@ -23,18 +30,17 @@ class JwtAuthenticator {
                     error_description: err.message
                 });
             });
-        };
-        this.ttl = 3600;
-    }
-    decode(token) {
-        return jsonwebtoken_1.decode(token, { complete: true });
-    }
-    verify(token) {
-        return new Promise((resolve, reject) => {
-            jsonwebtoken_1.verify(token, this.config.secret, { complete: true }, (err, jwt) => err ? reject(err) : resolve(jwt));
         });
     }
-    sign(audience, subjectOrClaims, claims) {
+    static decode(token) {
+        return jsonwebtoken_1.decode(token, { complete: true });
+    }
+    static verify(token, secret) {
+        return new Promise((resolve, reject) => {
+            jsonwebtoken_1.verify(token, secret, { complete: true }, (err, jwt) => err ? reject(err) : resolve(jwt));
+        });
+    }
+    async sign(audience, subjectOrClaims, claims) {
         let subject;
         if (subjectOrClaims === undefined) {
             subject = 'Anonymous';
@@ -48,6 +54,7 @@ class JwtAuthenticator {
         }
         if (claims === undefined)
             claims = {};
+        const client = await this.provider.find(audience);
         delete claims.iss;
         delete claims.sub;
         delete claims.aud;
@@ -55,14 +62,14 @@ class JwtAuthenticator {
         delete claims.nbf;
         delete claims.iat;
         const options = {
-            issuer: this.config.issuer,
+            issuer: this.provider.id,
             subject,
             audience,
-            expiresIn: this.ttl,
+            expiresIn: this.provider.ttl,
             notBefore: 0
         };
         return new Promise((resolve, reject) => {
-            jsonwebtoken_1.sign(claims, this.config.secret, options, (err, jwt) => err ? reject(err) : resolve(jwt));
+            jsonwebtoken_1.sign(claims, client.secret, options, (err, jwt) => err ? reject(err) : resolve(jwt));
         });
     }
 }

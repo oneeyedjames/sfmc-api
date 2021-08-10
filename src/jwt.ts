@@ -1,4 +1,4 @@
-import { RequestHandler, Request } from 'express';
+import { Router, Request, RequestHandler } from 'express';
 import { Jwt, JwtPayload, Secret, sign, decode, verify } from 'jsonwebtoken';
 
 declare module 'express' {
@@ -7,54 +7,69 @@ declare module 'express' {
 	}
 }
 
-export type JwtAuthorizerConfig = {
-	issuer: string;
+export type JwtClient = {
+	id: string;
 	secret: Secret;
 }
 
+export type JwtProvider = {
+	readonly id: string;
+	readonly ttl: number;
+
+	find(clientId: string): Promise<JwtClient>;
+}
+
 export class JwtAuthenticator {
-	authenticate: RequestHandler = (req, resp, next) => {
-		const header = req.header('Authorization');
-		if (header === undefined) return next();
-
-		const [scheme, token] = header.split(' ', 2);
-		if (scheme != 'JWT') return next();
-
-		this.verify(token)
-		.then(jwt => {
-			(req as Request).jwt = jwt;
-			next();
-		})
-		.catch(err => {
-			resp.status(401).json({
-				error: 'invalid_token',
-				error_description: err.message
-			});
-		});
-	}
-
-	private ttl = 3600;
-
-	constructor(private config: JwtAuthorizerConfig) {}
-
-	decode(token: string): Jwt {
+	static decode(token: string): Jwt {
 		return decode(token, { complete: true });
 	}
 
-	verify(token: string): Promise<Jwt> {
+	static verify(token: string, secret: Secret): Promise<Jwt> {
 		return new Promise<Jwt>((resolve, reject) => {
-			verify(token, this.config.secret, { complete: true },
+			verify(token, secret, { complete: true },
 				(err, jwt) => err ? reject(err) : resolve(jwt));
 		});
 	}
 
-	sign(audience: string | string[]): Promise<string>;
-	sign(audience: string | string[], subject: string): Promise<string>;
-	sign(audience: string | string[], subject: string, claims: JwtPayload): Promise<string>;
-	sign(audience: string | string[], claims: JwtPayload): Promise<string>;
+	readonly router: Router;
 
-	sign(
-		audience: string | string[],
+	constructor(private provider: JwtProvider) {
+		this.router = Router().use((req, resp, next) => {
+			if (req.method === 'OPTIONS') return next();
+
+			const header = req.header('Authorization');
+			if (header === undefined) return next();
+
+			const [scheme, token] = header.split(' ', 2);
+			if (scheme != 'JWT') return next();
+
+			const jwt = JwtAuthenticator.decode(token);
+
+			const clientId = (typeof jwt.payload.aud == 'string')
+				? jwt.payload.aud : jwt.payload.aud[0];
+
+			this.provider.find(clientId)
+			.then(client => JwtAuthenticator.verify(token, client.secret))
+			.then(jwt => {
+				(req as Request).jwt = jwt;
+				next();
+			})
+			.catch(err => {
+				resp.status(401).json({
+					error: 'invalid_token',
+					error_description: err.message
+				});
+			});
+		});
+	}
+
+	sign(audience: string): Promise<string>;
+	sign(audience: string, subject: string): Promise<string>;
+	sign(audience: string, subject: string, claims: JwtPayload): Promise<string>;
+	sign(audience: string, claims: JwtPayload): Promise<string>;
+
+	async sign(
+		audience: string,
 		subjectOrClaims?: string | JwtPayload,
 		claims?: JwtPayload
 	): Promise<string> {
@@ -69,7 +84,9 @@ export class JwtAuthenticator {
 		}
 
 		if (claims === undefined)
-			claims = {};
+			claims = {} as JwtPayload;
+
+		const client = await this.provider.find(audience);
 
 		delete claims.iss;
 		delete claims.sub;
@@ -79,15 +96,15 @@ export class JwtAuthenticator {
 		delete claims.iat;
 
 		const options = {
-			issuer: this.config.issuer,
+			issuer: this.provider.id,
 			subject,
 			audience,
-			expiresIn: this.ttl,
+			expiresIn: this.provider.ttl,
 			notBefore: 0
 		};
 
 		return new Promise<string>((resolve, reject) => {
-			sign(claims, this.config.secret, options,
+			sign(claims, client.secret, options,
 				(err, jwt) => err ? reject(err) : resolve(jwt));
 		});
 	}

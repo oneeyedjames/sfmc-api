@@ -3,24 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Application = void 0;
 const EventEmitter = require("events");
 const express = require("express");
-const jwt_1 = require("./jwt");
+const cors_1 = require("./cors");
 class Application extends EventEmitter {
-    constructor(config) {
+    constructor() {
         super();
-        this.config = config;
-        this.corsHosts = [
-            'http://localhost:4200'
-        ];
-        this.jwt = new jwt_1.JwtAuthenticator({
-            issuer: 'SFMC',
-            secret: config.jwtSecret
-        });
         this.application = express()
             .use(express.urlencoded({ extended: false }))
             .use(express.json())
-            .use(cors(this.corsHosts))
-            .use(this.jwt.authenticate)
-            .use(auth);
+            .use(cors_1.default({ hosts: ['http://localhost:4200'] }));
     }
     get address() {
         if (!this.server)
@@ -74,26 +64,3 @@ class Application extends EventEmitter {
     }
 }
 exports.Application = Application;
-function auth(req, resp, next) {
-    if (req.method === 'OPTIONS')
-        return next();
-    if (req.jwt === undefined)
-        return resp.sendStatus(401);
-    // this.jwt.sign(req.jwt.payload.aud, req.jwt.payload).then(jwt => {
-    // 	console.log(jwt, this.jwt.decode(jwt));
-    // 	next();
-    // });
-    next();
-}
-function cors(hosts) {
-    return (req, resp, next) => {
-        const origin = req.headers.origin;
-        if (hosts.indexOf(origin) !== -1)
-            resp.header('Access-Control-Allow-Origin', origin);
-        resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-            .header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
-            .header('Access-Control-Allow-Credentials', 'true')
-            .header('Access-Control-Expose-Headers', 'Set-Cookie');
-        next();
-    };
-}

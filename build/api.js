@@ -164,15 +164,6 @@ class ApiClient {
         });
         return events;
     }
-    getSearchParams(req, mc = true) {
-        let value = req.query.key;
-        let field = mc ? 'SubscriberKey' : 'Id';
-        if (value === undefined) {
-            value = req.query.email;
-            field = mc ? 'EmailAddress' : 'Email';
-        }
-        return [value, field];
-    }
     formatSubscriber(sub) {
         sub.ObjectID = undefined;
         sub.PartnerKey = undefined;
@@ -211,6 +202,15 @@ class ApiClient {
             event.Send = undefined;
         }
         return event;
+    }
+    getSearchParams(req, mc = true) {
+        let value = req.query.key;
+        let field = mc ? 'SubscriberKey' : 'Id';
+        if (value === undefined) {
+            value = req.query.email;
+            field = mc ? 'EmailAddress' : 'Email';
+        }
+        return [value, field];
     }
     handleError(resp) {
         return (err) => {

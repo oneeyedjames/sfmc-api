@@ -2,8 +2,8 @@ import { Server } from 'http';
 import * as EventEmitter from 'events';
 import * as express from 'express';
 
-import { Router, RequestHandler, Request, Response, NextFunction } from 'express';
-import { JwtAuthenticator } from './jwt';
+import { Router } from 'express';
+import cors from './cors';
 
 export interface Address {
 	port: number;
@@ -11,19 +11,9 @@ export interface Address {
 	address: string;
 }
 
-export interface ApplicationConfig {
-	jwtSecret: string;
-}
-
 export class Application extends EventEmitter {
 	private application: express.Application;
 	private server: Server;
-
-	private corsHosts: string[] = [
-		'http://localhost:4200'
-	];
-
-	private jwt: JwtAuthenticator;
 
 	public get address(): Address {
 		if (!this.server) return null;
@@ -41,20 +31,13 @@ export class Application extends EventEmitter {
 		return address;
 	}
 
-	public constructor(private config: ApplicationConfig) {
+	public constructor() {
 		super();
-
-		this.jwt = new JwtAuthenticator({
-			issuer: 'SFMC',
-			secret: config.jwtSecret
-		});
 
 		this.application = express()
 		.use(express.urlencoded({ extended: false }))
 		.use(express.json())
-		.use(cors(this.corsHosts))
-		.use(this.jwt.authenticate)
-		.use(auth);
+		.use(cors({ hosts: ['http://localhost:4200'] }));
 	}
 
 	public use(
@@ -116,34 +99,5 @@ export class Application extends EventEmitter {
 		let port: number = (typeof val === 'string') ? parseInt(val, 10) : val;
 
 		return isNaN(port) ? val : port;
-	}
-}
-
-function auth(req: Request, resp: Response, next: NextFunction) {
-	if (req.method === 'OPTIONS') return next();
-	if (req.jwt === undefined) return resp.sendStatus(401);
-
-	// this.jwt.sign(req.jwt.payload.aud, req.jwt.payload).then(jwt => {
-	// 	console.log(jwt, this.jwt.decode(jwt));
-	// 	next();
-	// });
-
-	next();
-}
-
-function cors(hosts: string[]): RequestHandler {
-	return (req: Request, resp: Response, next: NextFunction) => {
-		const origin = req.headers.origin as string;
-
-		if (hosts.indexOf(origin) !== -1)
-			resp.header('Access-Control-Allow-Origin', origin);
-
-		resp.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-			.header('Access-Control-Allow-Headers',
-				'Origin, X-Requested-With, Content-Type, Accept, Authorization')
-			.header('Access-Control-Allow-Credentials', 'true')
-			.header('Access-Control-Expose-Headers', 'Set-Cookie');
-
-		next();
 	}
 }

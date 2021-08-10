@@ -261,18 +261,6 @@ export class ApiClient {
 		return events;
 	}
 
-	private getSearchParams(req: Request, mc = true): [string, string] {
-		let value = req.query.key as string;
-		let field = mc ? 'SubscriberKey' : 'Id';
-
-		if (value === undefined) {
-			value = req.query.email as string;
-			field = mc ? 'EmailAddress' : 'Email';
-		}
-
-		return [value, field];
-	}
-
 	private formatSubscriber(sub: any) {
 		sub.ObjectID = undefined;
 		sub.PartnerKey = undefined;
@@ -321,6 +309,18 @@ export class ApiClient {
 		}
 
 		return event;
+	}
+
+	private getSearchParams(req: Request, mc = true): [string, string] {
+		let value = req.query.key as string;
+		let field = mc ? 'SubscriberKey' : 'Id';
+
+		if (value === undefined) {
+			value = req.query.email as string;
+			field = mc ? 'EmailAddress' : 'Email';
+		}
+
+		return [value, field];
 	}
 
 	private handleError(resp: Response) {
