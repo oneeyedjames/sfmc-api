@@ -107,14 +107,7 @@ export class ApiClient {
 		.get('/subscriber/:subKey/events', (req: Request, resp: Response) => {
 			const subKey = req.params.subKey as string;
 
-			Promise.all([
-				this.bounceEvent.get(subKey, 'SubscriberKey'),
-				this.clickEvent.get(subKey, 'SubscriberKey'),
-				this.openEvent.get(subKey, 'SubscriberKey'),
-				this.sentEvent.get(subKey, 'SubscriberKey'),
-				this.unsubEvent.get(subKey, 'SubscriberKey')
-			])
-			.then(res => [].concat(...res))
+			this.getEvents(subKey)
 			.then(res => this.getEventLists(res))
 			.then(res => res.map(this.formatSubscriberEvent))
 			.then(res => resp.json(res))
@@ -204,13 +197,7 @@ export class ApiClient {
 		subs.forEach(sub => sub.Events = []);
 
 		const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
-		const events = [].concat(...(await Promise.all([
-			this.bounceEvent.get(subKeys, 'SubscriberKey'),
-			this.clickEvent.get(subKeys, 'SubscriberKey'),
-			this.openEvent.get(subKeys, 'SubscriberKey'),
-			this.sentEvent.get(subKeys, 'SubscriberKey'),
-			this.unsubEvent.get(subKeys, 'SubscriberKey')
-		])));
+		const events = await this.getEvents(subKeys);
 
 		events.forEach(event => {
 			const subKey = event.SubscriberKey as string;
@@ -259,6 +246,16 @@ export class ApiClient {
 		});
 
 		return events;
+	}
+
+	private async getEvents(subKey: string | string[]) {
+		return [].concat(...(await Promise.all([
+			this.bounceEvent.get(subKey, 'SubscriberKey'),
+			this.clickEvent.get(subKey, 'SubscriberKey'),
+			this.openEvent.get(subKey, 'SubscriberKey'),
+			this.sentEvent.get(subKey, 'SubscriberKey'),
+			this.unsubEvent.get(subKey, 'SubscriberKey')
+		])));
 	}
 
 	private formatSubscriber(sub: any) {

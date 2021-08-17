@@ -61,14 +61,7 @@ class ApiClient {
         })
             .get('/subscriber/:subKey/events', (req, resp) => {
             const subKey = req.params.subKey;
-            Promise.all([
-                this.bounceEvent.get(subKey, 'SubscriberKey'),
-                this.clickEvent.get(subKey, 'SubscriberKey'),
-                this.openEvent.get(subKey, 'SubscriberKey'),
-                this.sentEvent.get(subKey, 'SubscriberKey'),
-                this.unsubEvent.get(subKey, 'SubscriberKey')
-            ])
-                .then(res => [].concat(...res))
+            this.getEvents(subKey)
                 .then(res => this.getEventLists(res))
                 .then(res => res.map(this.formatSubscriberEvent))
                 .then(res => resp.json(res))
@@ -121,13 +114,7 @@ class ApiClient {
             return subs;
         subs.forEach(sub => sub.Events = []);
         const subKeys = subs.mapUnique(sub => sub.SubscriberKey);
-        const events = [].concat(...(await Promise.all([
-            this.bounceEvent.get(subKeys, 'SubscriberKey'),
-            this.clickEvent.get(subKeys, 'SubscriberKey'),
-            this.openEvent.get(subKeys, 'SubscriberKey'),
-            this.sentEvent.get(subKeys, 'SubscriberKey'),
-            this.unsubEvent.get(subKeys, 'SubscriberKey')
-        ])));
+        const events = await this.getEvents(subKeys);
         events.forEach(event => {
             const subKey = event.SubscriberKey;
             const sub = subs.find(sub => sub.SubscriberKey == subKey);
@@ -163,6 +150,15 @@ class ApiClient {
                 .forEach(event => event.Send = send);
         });
         return events;
+    }
+    async getEvents(subKey) {
+        return [].concat(...(await Promise.all([
+            this.bounceEvent.get(subKey, 'SubscriberKey'),
+            this.clickEvent.get(subKey, 'SubscriberKey'),
+            this.openEvent.get(subKey, 'SubscriberKey'),
+            this.sentEvent.get(subKey, 'SubscriberKey'),
+            this.unsubEvent.get(subKey, 'SubscriberKey')
+        ])));
     }
     formatSubscriber(sub) {
         sub.ObjectID = undefined;

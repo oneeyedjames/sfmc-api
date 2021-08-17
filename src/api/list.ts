@@ -34,7 +34,8 @@ export class ListApi extends ObjectApi {
 			.forEach(listSub => listSub.List = list);
 		});
 
-		return listSubs;
+		return listSubs.filter(listSub => listSub.List &&
+			listSub.List.ListClassification == 'PublicationList');
 	}
 
 	static populateListCode(list: any) {

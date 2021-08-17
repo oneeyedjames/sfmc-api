@@ -1,5 +1,5 @@
-import { ApiObjectFactory } from './api';
-import { ObjectApi,  } from './object';
+import { ApiObjectFactory, ApiObjectFilter } from './api';
+import { ObjectApi } from './object';
 
 export class EventApi extends ObjectApi {
 	static readonly Props = [
@@ -26,5 +26,20 @@ export class EventApi extends ObjectApi {
 
 	constructor(factory: ApiObjectFactory, props: string[] = []) {
 		super(factory, [...EventApi.Props, ...props]);
+	}
+
+	protected getFilter(value?: string | string[], field = 'ID'): ApiObjectFilter {
+		const refDate = new Date();
+		refDate.setDate(refDate.getDate() - 30);
+
+		return {
+			operator: 'AND',
+			leftOperand: super.getFilter(value, field),
+			rightOperand: {
+				operator: 'greaterThan',
+				leftOperand: 'EventDate',
+				rightOperand: refDate.toISOString()
+			}
+		}
 	}
 }

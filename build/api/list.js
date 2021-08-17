@@ -20,7 +20,8 @@ class ListApi extends object_1.ObjectApi {
             listSubs.filter(listSub => listSub.ListID == list.ID)
                 .forEach(listSub => listSub.List = list);
         });
-        return listSubs;
+        return listSubs.filter(listSub => listSub.List &&
+            listSub.List.ListClassification == 'PublicationList');
     }
     static populateListCode(list) {
         const name = list.ListName;

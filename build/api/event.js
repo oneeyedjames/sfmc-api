@@ -6,6 +6,19 @@ class EventApi extends object_1.ObjectApi {
     constructor(factory, props = []) {
         super(factory, [...EventApi.Props, ...props]);
     }
+    getFilter(value, field = 'ID') {
+        const refDate = new Date();
+        refDate.setDate(refDate.getDate() - 30);
+        return {
+            operator: 'AND',
+            leftOperand: super.getFilter(value, field),
+            rightOperand: {
+                operator: 'greaterThan',
+                leftOperand: 'EventDate',
+                rightOperand: refDate.toISOString()
+            }
+        };
+    }
 }
 exports.EventApi = EventApi;
 EventApi.Props = [
