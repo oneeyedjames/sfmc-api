@@ -3,6 +3,12 @@ import * as EventEmitter from 'events';
 import * as express from 'express';
 
 import { Router } from 'express';
+
+/**
+ * Middleware support for AJAX requests
+ * Only use for for development and testing
+ * Do not use in a production environment
+ */
 import cors from './cors';
 
 export interface Address {

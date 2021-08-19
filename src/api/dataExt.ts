@@ -1,6 +1,11 @@
 import { ApiObjectFactory } from './api';
 import { ObjectApi } from './object';
 
+/**
+ * Represents data in synchronized data extensions.
+ *
+ * Contact and Subscription objects are synced from Salesforce every 15 minutes.
+ */
 export class DataExtApi extends ObjectApi {
 	static readonly Props = [
 		'Id'

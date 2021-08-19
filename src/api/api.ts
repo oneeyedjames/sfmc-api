@@ -21,6 +21,9 @@ export type ApiObjectFactory = {
 	(config: ApiObjectConfig): ApiObject;
 }
 
+/**
+ * Backfill for missing SOAP objects in FuelSDK
+ */
 export class ApiObject implements AsyncObject {
 	props: ApiObjectProps;
 	options: any;

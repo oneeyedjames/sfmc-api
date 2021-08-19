@@ -49,12 +49,18 @@ export class ListSendApi extends ObjectApi {
 	}
 }
 
+/**
+ * Backfill for missing SOAP object in FuelSDK
+ */
 export class SendObject extends ApiObject {
 	constructor(parent: ApiClient, config: ApiObjectConfig) {
 		super('Send', parent, config);
 	}
 }
 
+/**
+ * Backfill for missing SOAP object in FuelSDK
+ */
 export class ListSendObject extends ApiObject {
 	constructor(parent: ApiClient, config: ApiObjectConfig) {
 		super('ListSend', parent, config);

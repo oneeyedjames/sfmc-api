@@ -3,6 +3,10 @@ import { Router } from 'express';
 
 import { Application, Address } from './app';
 import { ApiClient, ApiClientConfig } from './api';
+
+/**
+ * Middleware support for JWT authentication
+ */
 import authenticator from './auth';
 
 dotenv.config();

@@ -38,6 +38,13 @@ export class ListApi extends ObjectApi {
 			listSub.List.ListClassification == 'PublicationList');
 	}
 
+	/**
+	 * Parses the given list name for a product code. Publication lists are
+	 * expected to follow this naming convention:
+	 *
+	 *   <Product Code> - <Product Description>
+	 *
+	 */
 	static populateListCode(list: any) {
 		const name = list.ListName as string;
 		const keys = name.match(/^(.+) - .+$/i);

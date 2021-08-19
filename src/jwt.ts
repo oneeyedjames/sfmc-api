@@ -1,4 +1,4 @@
-import { Router, Request, RequestHandler } from 'express';
+import { Router, Request } from 'express';
 import { Jwt, JwtPayload, Secret, sign, decode, verify } from 'jsonwebtoken';
 
 declare module 'express' {
