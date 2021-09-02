@@ -2,6 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataExtApi = void 0;
 const object_1 = require("./object");
+/**
+ * Represents data in synchronized data extensions.
+ *
+ * Contact and Subscription objects are synced from Salesforce every 15 minutes.
+ */
 class DataExtApi extends object_1.ObjectApi {
     constructor(factory, extName, props = [], propMap = {}) {
         super(factory, [...DataExtApi.Props, ...props]);

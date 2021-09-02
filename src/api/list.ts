@@ -26,6 +26,8 @@ export class ListApi extends ObjectApi {
 
 	async getBySubscriber(value: string | string[], field = 'SubscriberKey') {
 		const listSubs = await this.listSubApi.get(value, field);
+		if (listSubs.length == 0) return listSubs;
+
 		const listIds = Array.from(new Set<string>(listSubs.map(ls => ls.ListID)));
 		const lists = await this.get(listIds);
 

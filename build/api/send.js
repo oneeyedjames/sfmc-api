@@ -43,12 +43,18 @@ ListSendApi.Props = [
     'List.ID',
     'List.ListName'
 ];
+/**
+ * Backfill for missing SOAP object in FuelSDK
+ */
 class SendObject extends api_1.ApiObject {
     constructor(parent, config) {
         super('Send', parent, config);
     }
 }
 exports.SendObject = SendObject;
+/**
+ * Backfill for missing SOAP object in FuelSDK
+ */
 class ListSendObject extends api_1.ApiObject {
     constructor(parent, config) {
         super('ListSend', parent, config);

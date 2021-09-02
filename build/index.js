@@ -4,6 +4,9 @@ const dotenv = require("dotenv");
 const express_1 = require("express");
 const app_1 = require("./app");
 const api_1 = require("./api");
+/**
+ * Middleware support for JWT authentication
+ */
 const auth_1 = require("./auth");
 dotenv.config();
 const apiCfg = {

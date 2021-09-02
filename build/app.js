@@ -3,6 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Application = void 0;
 const EventEmitter = require("events");
 const express = require("express");
+/**
+ * Middleware support for AJAX requests
+ * Only use for for development and testing
+ * Do not use in a production environment
+ */
 const cors_1 = require("./cors");
 class Application extends EventEmitter {
     constructor() {

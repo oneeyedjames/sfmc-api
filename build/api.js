@@ -143,6 +143,8 @@ class ApiClient {
         return cons;
     }
     async getEventLists(events) {
+        if (events.length == 0)
+            return events;
         const sendIds = events.mapUnique(event => event.SendID);
         const sends = await this.sends.get(sendIds);
         sends.forEach(send => {

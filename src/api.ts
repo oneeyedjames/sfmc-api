@@ -237,6 +237,8 @@ export class ApiClient {
 	}
 
 	private async getEventLists(events: any[]) {
+		if (events.length == 0) return events;
+
 		const sendIds = events.mapUnique<string>(event => event.SendID);
 		const sends = await this.sends.get(sendIds);
 

@@ -6,6 +6,9 @@ class EventApi extends object_1.ObjectApi {
     constructor(factory, props = []) {
         super(factory, [...EventApi.Props, ...props]);
     }
+    /**
+     * Overrides default behavior to limit events to rolling month.
+     */
     getFilter(value, field = 'ID') {
         const refDate = new Date();
         refDate.setDate(refDate.getDate() - 30);

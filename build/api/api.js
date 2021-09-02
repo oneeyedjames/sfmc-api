@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ApiObject = exports.ApiClient = void 0;
 const ApiClient = require("sfmc-fuelsdk-node");
 exports.ApiClient = ApiClient;
+/**
+ * Backfill for missing SOAP objects in FuelSDK
+ */
 class ApiObject {
     constructor(objName, parent, config) {
         this.objName = objName;

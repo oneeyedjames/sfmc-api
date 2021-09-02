@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ObjectApi = void 0;
 const async_1 = require("../async");
 class ObjectApi {
+    // Suppress caching until a better scheme can be implemented
     // private cache = new Cache();
     constructor(getObject, props = []) {
         this.getObject = getObject;
@@ -73,7 +74,7 @@ class ObjectApi {
         };
         if (typeof value !== 'string') {
             if (value.length == 0) {
-                throw new Error('Filter array cannot is empty');
+                throw new Error('Filter array cannot be empty');
             }
             else if (value.length == 1) {
                 filter.rightOperand = value[0];
