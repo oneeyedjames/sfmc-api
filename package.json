@@ -1,5 +1,5 @@
 {
-	"name": "qHub",
+	"name": "sfmc-api",
 	"version": "1.0.0",
 	"description": "",
 	"main": "build/index.js",

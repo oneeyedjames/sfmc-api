@@ -11,6 +11,8 @@ class SendApi extends object_1.ObjectApi {
     }
     async get(value, field = 'ID') {
         const sends = await super.get(value, field);
+        if (sends.length == 0)
+            return sends;
         const sendIds = Array.from(new Set(sends.map(s => s.ID)));
         const listSends = await this.listSendApi.get(sendIds);
         listSends.forEach((listSend) => {

@@ -115,6 +115,8 @@ class ApiClient {
         subs.forEach(sub => sub.Events = []);
         const subKeys = subs.mapUnique(sub => sub.SubscriberKey);
         const events = await this.getEvents(subKeys);
+        if (events.length == 0)
+            return subs;
         events.forEach(event => {
             const subKey = event.SubscriberKey;
             const sub = subs.find(sub => sub.SubscriberKey == subKey);
@@ -154,6 +156,8 @@ class ApiClient {
         return events;
     }
     async getEvents(subKey) {
+        if (subKey.length == 0)
+            return [];
         return [].concat(...(await Promise.all([
             this.bounceEvent.get(subKey, 'SubscriberKey'),
             this.clickEvent.get(subKey, 'SubscriberKey'),

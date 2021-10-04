@@ -19,6 +19,8 @@ export class SendApi extends ObjectApi {
 
 	async get(value?: string | string[], field = 'ID') {
 		const sends = await super.get(value, field);
+		if (sends.length == 0) return sends;
+
 		const sendIds = Array.from(new Set<string>(sends.map(s => s.ID)));
 		const listSends = await this.listSendApi.get(sendIds);
 
