@@ -42,11 +42,11 @@ export class ObjectApi {
 		// if (this.cache.isset(key))
 		// 	return this.cache.get<T[]>(key).payload;
 
-		console.log('GET', obj.objName, new Date());
+		// console.log('GET', obj.objName, new Date());
 		const time = Date.now();
 		const res = await asyncToPromise(obj.get.bind(obj))();
 		const length = Date.now() - time;
-		console.log('GET', obj.objName, `${length} ms`);
+		// console.log('GET', obj.objName, `${length} ms`);
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {
@@ -58,12 +58,12 @@ export class ObjectApi {
 	}
 
 	protected async putPromise<T = any>(obj: ApiObject) {
-		console.log('PUT', obj.objName, new Date());
+		// console.log('PUT', obj.objName, new Date());
 		const time = Date.now();
 		const res = await asyncToPromise(obj.patch.bind(obj))();
 		const length = Date.now() - time;
-		console.log('PUT', obj.objName, `${length} ms`);
-		console.log(res);
+		// console.log('PUT', obj.objName, `${length} ms`);
+		// console.log(res);
 
 		if (res.body.OverallStatus == 'OK') {
 			return res.body.Results as T;
