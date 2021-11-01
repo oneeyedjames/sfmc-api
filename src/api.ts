@@ -40,6 +40,7 @@ export class ApiClient {
 	readonly router: Router;
 
 	readonly subscribers: SubscriberApi;
+	readonly unsubscribes: DataExtApi;
 
 	readonly lists: ListApi;
 
@@ -64,12 +65,14 @@ export class ApiClient {
 		.get('/subscribers', (req: Request, resp: Response) => {
 			const [value, field] = this.getSearchParams(req);
 			this.subscribers.get(value, field)
+			.then(res => this.getUnsubscribes(res))
 			.then(res => resp.json(res))
 			.catch(this.handleError(resp));
 		})
 
 		.get('/subscriber/:subKey', (req: Request, resp: Response) => {
 			this.subscribers.get(req.params.subKey, 'SubscriberKey')
+			.then(res => this.getUnsubscribes(res))
 			.then(res => this.getSubscriberLists(res))
 			.then(res => this.getSubscriberEvents(res))
 			.then(res => res.map(this.formatSubscriber.bind(this)))
@@ -134,6 +137,12 @@ export class ApiClient {
 
 		this.subscribers = new SubscriberApi(cfg => this.client.subscriber(cfg));
 
+		this.unsubscribes = new DataExtApi(
+			cfg => this.client.dataExtensionRow(cfg),
+			DataExtApi.UnsubscribeType,
+			DataExtApi.UnsubscribeProps
+		);
+
 		this.lists = new ListApi(
 			cfg => this.client.list(cfg),
 			cfg => this.client.listSubscriber(cfg)
@@ -170,6 +179,25 @@ export class ApiClient {
 			DataExtApi.SubscriptionProps,
 			DataExtApi.SubscriptionPropMap
 		);
+	}
+
+	private async getUnsubscribes(subs: any[]) {
+		if (subs.length == 0) return subs;
+
+		const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
+		const unsubs = await this.unsubscribes.get(subKeys, 'SubscriberKey');
+
+		unsubs.forEach(unsub => {
+			const subKey = unsub.SubscriberKey as string;
+			const sub = subs.find(sub => sub.SubscriberKey == subKey);
+
+			if (sub !== undefined) {
+				sub.UnsubDate = unsub.UnsubDateUTC;
+				sub.UnsubReason = unsub.UnsubReason;
+			}
+		});
+
+		return subs;
 	}
 
 	private async getSubscriberLists(subs: any[]) {

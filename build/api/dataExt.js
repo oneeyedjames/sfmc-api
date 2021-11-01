@@ -9,7 +9,7 @@ const object_1 = require("./object");
  */
 class DataExtApi extends object_1.ObjectApi {
     constructor(factory, extName, props = [], propMap = {}) {
-        super(factory, [...DataExtApi.Props, ...props]);
+        super(factory, props /*[...DataExtApi.Props, ...props]*/);
         this.extName = extName;
         this.propMap = propMap;
     }
@@ -32,11 +32,12 @@ class DataExtApi extends object_1.ObjectApi {
     }
 }
 exports.DataExtApi = DataExtApi;
-DataExtApi.Props = [
-    'Id'
-];
+// static readonly Props = [
+// 	'Id'
+// ];
 DataExtApi.ContactType = 'Contact_Salesforce';
 DataExtApi.ContactProps = [
+    'Id',
     'Legacy_Id__c',
     'Customer_Number__c',
     'BusinessLocation__c',
@@ -51,6 +52,7 @@ DataExtApi.ContactPropMap = {
 };
 DataExtApi.SubscriptionType = 'Subscription__c_Salesforce';
 DataExtApi.SubscriptionProps = [
+    'Id',
     'Business_Location__c',
     'Line_of_Business__c',
     'Contact__c',
@@ -65,3 +67,11 @@ DataExtApi.SubscriptionPropMap = {
     Global_Product__c: 'GlobalProductId',
     Line_of_Business__c: 'LineOfBusiness'
 };
+DataExtApi.UnsubscribeType = 'Global_Unsubscribes';
+DataExtApi.UnsubscribeProps = [
+    'BusinessUnitID',
+    'SubscriberID',
+    'SubscriberKey',
+    'UnsubDateUTC',
+    'UnsubReason'
+];
