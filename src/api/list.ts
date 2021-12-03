@@ -49,7 +49,7 @@ export class ListApi extends ObjectApi {
 	 */
 	static populateListCode(list: any) {
 		const name = list.ListName as string;
-		const keys = name.match(/^(.+) - .+$/i);
+		const keys = name.match(/^([^\s]+) - .+$/i);
 		list.ListCode = keys ? keys[1] : undefined;
 	}
 }

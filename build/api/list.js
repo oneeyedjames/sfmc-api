@@ -34,7 +34,7 @@ class ListApi extends object_1.ObjectApi {
      */
     static populateListCode(list) {
         const name = list.ListName;
-        const keys = name.match(/^(.+) - .+$/i);
+        const keys = name.match(/^([^\s]+) - .+$/i);
         list.ListCode = keys ? keys[1] : undefined;
     }
 }
