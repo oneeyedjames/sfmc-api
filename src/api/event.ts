@@ -24,7 +24,7 @@ export class EventApi extends ObjectApi {
 		'IsMasterUnsubscribed'
 	];
 
-	constructor(factory: ApiObjectFactory, props: string[] = []) {
+	constructor(factory: ApiObjectFactory, props: string[] = [], private ttl?: number) {
 		super(factory, [...EventApi.Props, ...props]);
 	}
 
@@ -32,12 +32,16 @@ export class EventApi extends ObjectApi {
 	 * Overrides default behavior to limit events to rolling month.
 	 */
 	protected getFilter(value?: string | string[], field = 'ID'): ApiObjectFilter {
+		const parentFilter = super.getFilter(value, field);
+
+		if (this.ttl === undefined) return parentFilter;
+
 		const refDate = new Date();
-		refDate.setDate(refDate.getDate() - 30);
+		refDate.setDate(refDate.getDate() - this.ttl);
 
 		return {
 			operator: 'AND',
-			leftOperand: super.getFilter(value, field),
+			leftOperand: parentFilter,
 			rightOperand: {
 				operator: 'greaterThan',
 				leftOperand: 'EventDate',

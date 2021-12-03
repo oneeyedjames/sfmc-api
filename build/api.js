@@ -91,9 +91,9 @@ class ApiClient {
         this.lists = new list_1.ListApi(cfg => this.client.list(cfg), cfg => this.client.listSubscriber(cfg));
         this.sends = new send_1.SendApi(cfg => new send_1.SendObject(this.client, cfg), cfg => new send_1.ListSendObject(this.client, cfg));
         this.bounceEvent = new event_1.EventApi(cfg => this.client.bounceEvent(cfg), event_1.EventApi.BounceProps);
-        this.clickEvent = new event_1.EventApi(cfg => this.client.clickEvent(cfg), event_1.EventApi.ClickProps);
-        this.openEvent = new event_1.EventApi(cfg => this.client.openEvent(cfg));
-        this.sentEvent = new event_1.EventApi(cfg => this.client.sentEvent(cfg));
+        this.clickEvent = new event_1.EventApi(cfg => this.client.clickEvent(cfg), event_1.EventApi.ClickProps, 30);
+        this.openEvent = new event_1.EventApi(cfg => this.client.openEvent(cfg), [], 30);
+        this.sentEvent = new event_1.EventApi(cfg => this.client.sentEvent(cfg), [], 30);
         this.unsubEvent = new event_1.EventApi(cfg => this.client.unsubEvent(cfg), event_1.EventApi.UnsubProps);
         this.contacts = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.ContactType, dataExt_1.DataExtApi.ContactProps, dataExt_1.DataExtApi.ContactPropMap);
         this.subscriptions = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.SubscriptionType, dataExt_1.DataExtApi.SubscriptionProps, dataExt_1.DataExtApi.SubscriptionPropMap);

@@ -157,11 +157,11 @@ export class ApiClient {
 			EventApi.BounceProps);
 
 		this.clickEvent = new EventApi(cfg => this.client.clickEvent(cfg),
-			EventApi.ClickProps);
+			EventApi.ClickProps, 30);
 
-		this.openEvent = new EventApi(cfg => this.client.openEvent(cfg));
+		this.openEvent = new EventApi(cfg => this.client.openEvent(cfg), [], 30);
 
-		this.sentEvent = new EventApi(cfg => this.client.sentEvent(cfg));
+		this.sentEvent = new EventApi(cfg => this.client.sentEvent(cfg), [], 30);
 
 		this.unsubEvent = new EventApi(cfg => this.client.unsubEvent(cfg),
 			EventApi.UnsubProps);
