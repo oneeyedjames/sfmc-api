@@ -68,8 +68,8 @@ export class DataExtApi extends ObjectApi {
 		super(factory, props /*[...DataExtApi.Props, ...props]*/);
 	}
 
-	async get(value?: string | string[], field = 'Id') {
-		const rows = await super.get(value, field);
+	async get(value?: string | string[], field = 'Id', extra?: string) {
+		const rows = await super.get(value, field, extra);
 
 		return rows.map(row => {
 			const data = {} as { [key: string]: any };
@@ -84,8 +84,8 @@ export class DataExtApi extends ObjectApi {
 		});
 	}
 
-	protected getConfig(value?: string | string[], field = 'Id') {
-		const config = super.getConfig(value, field) as any;
+	protected getConfig(value?: string | string[], field = 'Id', extra?: string) {
+		const config = super.getConfig(value, field, extra) as any;
 		config.Name = this.extName;
 		return config;
 	}

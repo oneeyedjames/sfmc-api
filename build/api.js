@@ -22,8 +22,8 @@ class ApiClient {
         });
         this.router = express_1.Router()
             .get('/subscribers', (req, resp) => {
-            const [value, field] = this.getSearchParams(req);
-            this.subscribers.get(value, field)
+            const search = req.query.search;
+            this.subscribers.get(search, 'SubscriberKey', 'EmailAddress')
                 .then(res => this.getUnsubscribes(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
@@ -70,8 +70,8 @@ class ApiClient {
                 .catch(this.handleError(resp));
         })
             .get('/contacts', (req, resp) => {
-            const [value, field] = this.getSearchParams(req, false);
-            this.contacts.get(value, field)
+            const search = req.query.search;
+            this.contacts.get(search, 'Id', 'Email')
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
@@ -222,15 +222,6 @@ class ApiClient {
             event.Send = undefined;
         }
         return event;
-    }
-    getSearchParams(req, mc = true) {
-        let value = req.query.key;
-        let field = mc ? 'SubscriberKey' : 'Id';
-        if (value === undefined) {
-            value = req.query.email;
-            field = mc ? 'EmailAddress' : 'Email';
-        }
-        return [value, field];
     }
     handleError(resp) {
         return (err) => {

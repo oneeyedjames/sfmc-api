@@ -13,8 +13,8 @@ class DataExtApi extends object_1.ObjectApi {
         this.extName = extName;
         this.propMap = propMap;
     }
-    async get(value, field = 'Id') {
-        const rows = await super.get(value, field);
+    async get(value, field = 'Id', extra) {
+        const rows = await super.get(value, field, extra);
         return rows.map(row => {
             const data = {};
             row.Properties.Property.forEach((prop) => {
@@ -25,8 +25,8 @@ class DataExtApi extends object_1.ObjectApi {
             return data;
         });
     }
-    getConfig(value, field = 'Id') {
-        const config = super.getConfig(value, field);
+    getConfig(value, field = 'Id', extra) {
+        const config = super.getConfig(value, field, extra);
         config.Name = this.extName;
         return config;
     }

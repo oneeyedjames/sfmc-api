@@ -9,9 +9,9 @@ class ObjectApi {
         this.getObject = getObject;
         this.props = props;
     }
-    get(value, field = 'ID') {
+    get(value, field = 'ID', extra) {
         if (this.getObject !== undefined) {
-            const config = this.getConfig(value, field);
+            const config = this.getConfig(value, field, extra);
             return this.getPromise(this.getObject(config));
         }
         else {
@@ -60,30 +60,38 @@ class ObjectApi {
             throw new Error(res.error || res);
         }
     }
-    getConfig(value, field = 'ID') {
+    getConfig(value, field = 'ID', extra) {
         const config = { props: this.props };
         if (value !== undefined && field !== undefined)
-            config.filter = this.getFilter(value, field);
+            config.filter = this.getFilter(value, field, extra);
+        console.log(value, field, extra, config.filter);
         return config;
     }
-    getFilter(value, field = 'ID') {
-        const filter = {
-            operator: 'equals',
-            leftOperand: field,
-            rightOperand: value
-        };
-        if (typeof value !== 'string') {
+    getFilter(value, field = 'ID', extra) {
+        if (Array.isArray(value)) {
             if (value.length == 0) {
                 throw new Error('Filter array cannot be empty');
             }
             else if (value.length == 1) {
-                filter.rightOperand = value[0];
-            }
-            else {
-                filter.operator = 'IN';
+                value = value[0];
             }
         }
-        return filter;
+        const filter = {
+            operator: Array.isArray(value) ? 'IN' : 'equals',
+            leftOperand: field,
+            rightOperand: value
+        };
+        if (extra === undefined)
+            return filter;
+        return {
+            operator: 'OR',
+            leftOperand: filter,
+            rightOperand: {
+                operator: Array.isArray(value) ? 'IN' : 'equals',
+                leftOperand: extra,
+                rightOperand: value
+            }
+        };
     }
 }
 exports.ObjectApi = ObjectApi;

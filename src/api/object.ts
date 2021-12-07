@@ -18,9 +18,9 @@ export class ObjectApi {
 		protected props: ApiObjectProps = []
 	) {}
 
-	get(value?: string | string[], field = 'ID') {
+	get(value?: string | string[], field = 'ID', extra?: string) {
 		if (this.getObject !== undefined) {
-			const config = this.getConfig(value, field);
+			const config = this.getConfig(value, field, extra);
 			return this.getPromise(this.getObject(config));
 		} else {
 			return Promise.reject('No API Object');
@@ -72,32 +72,42 @@ export class ObjectApi {
 		}
 	}
 
-	protected getConfig(value?: string | string[], field = 'ID'): ApiObjectConfig {
+	protected getConfig(value?: string | string[], field = 'ID', extra?: string): ApiObjectConfig {
 		const config = { props: this.props } as ApiObjectConfig;
 
 		if (value !== undefined && field !== undefined)
-			config.filter = this.getFilter(value, field);
+			config.filter = this.getFilter(value, field, extra);
+
+		console.log(value, field, extra, config.filter);
 
 		return config;
 	}
 
-	protected getFilter(value?: string | string[], field = 'ID'): ApiObjectFilter {
-		const filter = {
-			operator: 'equals',
-			leftOperand: field,
-			rightOperand: value
-		};
-
-		if (typeof value !== 'string') {
+	protected getFilter(value?: string | string[], field = 'ID', extra?: string): ApiObjectFilter {
+		if (Array.isArray(value)) {
 			if (value.length == 0) {
 				throw new Error('Filter array cannot be empty');
 			} else if (value.length == 1) {
-				filter.rightOperand = value[0];
-			} else {
-				filter.operator = 'IN';
+				value = value[0];
 			}
 		}
 
-		return filter;
+		const filter = {
+			operator: Array.isArray(value) ? 'IN' : 'equals',
+			leftOperand: field,
+			rightOperand: value
+		} as ApiObjectFilter;
+
+		if (extra === undefined) return filter;
+
+		return {
+			operator: 'OR',
+			leftOperand: filter,
+			rightOperand: {
+				operator: Array.isArray(value) ? 'IN' : 'equals',
+				leftOperand: extra,
+				rightOperand: value
+			}
+		}
 	}
 }
