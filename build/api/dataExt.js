@@ -8,8 +8,17 @@ const object_1 = require("./object");
  * Contact and Subscription objects are synced from Salesforce every 15 minutes.
  */
 class DataExtApi extends object_1.ObjectApi {
+    // static readonly UnsubscribeType = 'Global_Unsubscribes';
+    //
+    // static readonly UnsubscribeProps = [
+    // 	'BusinessUnitID',
+    // 	'SubscriberID',
+    // 	'SubscriberKey',
+    // 	'UnsubDateUTC',
+    // 	'UnsubReason'
+    // ];
     constructor(factory, extName, props = [], propMap = {}) {
-        super(factory, props /*[...DataExtApi.Props, ...props]*/);
+        super(factory, [...DataExtApi.Props, ...props]);
         this.extName = extName;
         this.propMap = propMap;
     }
@@ -32,12 +41,12 @@ class DataExtApi extends object_1.ObjectApi {
     }
 }
 exports.DataExtApi = DataExtApi;
-// static readonly Props = [
-// 	'Id'
-// ];
+DataExtApi.Props = [
+    'Id'
+];
 DataExtApi.ContactType = 'Contact_Salesforce';
 DataExtApi.ContactProps = [
-    'Id',
+    // 'Id',
     'Legacy_Id__c',
     'Customer_Number__c',
     'BusinessLocation__c',
@@ -52,7 +61,7 @@ DataExtApi.ContactPropMap = {
 };
 DataExtApi.SubscriptionType = 'Subscription__c_Salesforce';
 DataExtApi.SubscriptionProps = [
-    'Id',
+    // 'Id',
     'Business_Location__c',
     'Line_of_Business__c',
     'Contact__c',
@@ -67,11 +76,3 @@ DataExtApi.SubscriptionPropMap = {
     Global_Product__c: 'GlobalProductId',
     Line_of_Business__c: 'LineOfBusiness'
 };
-DataExtApi.UnsubscribeType = 'Global_Unsubscribes';
-DataExtApi.UnsubscribeProps = [
-    'BusinessUnitID',
-    'SubscriberID',
-    'SubscriberKey',
-    'UnsubDateUTC',
-    'UnsubReason'
-];
