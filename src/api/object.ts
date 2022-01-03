@@ -1,5 +1,4 @@
 import { asyncToPromise } from '../async';
-// import { Cache } from '../cache'
 
 import {
 	ApiObject,
@@ -10,9 +9,6 @@ import {
 } from './api';
 
 export class ObjectApi {
-	// Suppress caching until a better scheme can be implemented
-	// private cache = new Cache();
-
 	constructor(
 		protected getObject: ApiObjectFactory,
 		protected props: ApiObjectProps = []
@@ -38,19 +34,10 @@ export class ObjectApi {
 	}
 
 	protected async getPromise<T = any>(obj: ApiObject) {
-		// const key = JSON.stringify(obj.config);
-		// if (this.cache.isset(key))
-		// 	return this.cache.get<T[]>(key).payload;
-
-		// console.log('GET', obj.objName, new Date());
-		const time = Date.now();
 		const res = await asyncToPromise(obj.get.bind(obj))();
-		const length = Date.now() - time;
-		// console.log('GET', obj.objName, `${length} ms`);
 
 		if (res.body.OverallStatus == 'OK' ||
 			res.body.OverallStatus == 'MoreDataAvailable') {
-			// this.cache.set(key, res.body.Results as T[]);
 			return res.body.Results as T[];
 		} else {
 			throw new Error(res.error || res);
@@ -58,12 +45,7 @@ export class ObjectApi {
 	}
 
 	protected async putPromise<T = any>(obj: ApiObject) {
-		// console.log('PUT', obj.objName, new Date());
-		const time = Date.now();
 		const res = await asyncToPromise(obj.patch.bind(obj))();
-		const length = Date.now() - time;
-		// console.log('PUT', obj.objName, `${length} ms`);
-		// console.log(res);
 
 		if (res.body.OverallStatus == 'OK') {
 			return res.body.Results as T;
@@ -78,17 +60,17 @@ export class ObjectApi {
 		if (value !== undefined && field !== undefined)
 			config.filter = this.getFilter(value, field, extra);
 
-		console.log(value, field, extra, config.filter);
+		// console.log(value, field, extra, config.filter);
 
 		return config;
 	}
 
 	protected getFilter(value?: string | string[], field = 'ID', extra?: string): ApiObjectFilter {
 		if (Array.isArray(value)) {
-			if (value.length == 0) {
-				throw new Error('Filter array cannot be empty');
-			} else if (value.length == 1) {
+			if (value.length == 1) {
 				value = value[0];
+			} else if (value.length == 0) {
+				throw new Error('Filter array cannot be empty');
 			}
 		}
 
@@ -102,12 +84,8 @@ export class ObjectApi {
 
 		return {
 			operator: 'OR',
-			leftOperand: filter,
-			rightOperand: {
-				operator: Array.isArray(value) ? 'IN' : 'equals',
-				leftOperand: extra,
-				rightOperand: value
-			}
+			leftOperand: { ...filter },
+			rightOperand: { ...filter, leftOperand: extra }
 		}
 	}
 }
