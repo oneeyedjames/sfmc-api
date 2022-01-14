@@ -49,16 +49,6 @@ export class DataExtApi extends ObjectApi {
 		Line_of_Business__c: 'LineOfBusiness'
 	};
 
-	// static readonly UnsubscribeType = 'Global_Unsubscribes';
-	//
-	// static readonly UnsubscribeProps = [
-	// 	'BusinessUnitID',
-	// 	'SubscriberID',
-	// 	'SubscriberKey',
-	// 	'UnsubDateUTC',
-	// 	'UnsubReason'
-	// ];
-
 	constructor(
 		factory: ApiObjectFactory,
 		protected extName: string,

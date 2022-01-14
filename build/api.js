@@ -24,13 +24,11 @@ class ApiClient {
             .get('/subscribers', (req, resp) => {
             const search = req.query.search;
             this.subscribers.get(search, 'SubscriberKey', 'EmailAddress')
-                // .then(res => this.getUnsubscribes(res))
                 .then(res => resp.json(res))
                 .catch(this.handleError(resp));
         })
             .get('/subscriber/:subKey', (req, resp) => {
             this.subscribers.get(req.params.subKey, 'SubscriberKey')
-                // .then(res => this.getUnsubscribes(res))
                 .then(res => this.getSubscriberLists(res))
                 .then(res => this.getSubscriberEvents(res))
                 .then(res => res.map(this.formatSubscriber.bind(this)))
@@ -87,11 +85,6 @@ class ApiClient {
                 .catch(this.handleError(resp));
         });
         this.subscribers = new subscriber_1.SubscriberApi(cfg => this.client.subscriber(cfg));
-        // this.unsubscribes = new DataExtApi(
-        // 	cfg => this.client.dataExtensionRow(cfg),
-        // 	DataExtApi.UnsubscribeType,
-        // 	DataExtApi.UnsubscribeProps
-        // );
         this.lists = new list_1.ListApi(cfg => this.client.list(cfg), cfg => this.client.listSubscriber(cfg));
         this.sends = new send_1.SendApi(cfg => new send_1.SendObject(this.client, cfg), cfg => new send_1.ListSendObject(this.client, cfg));
         this.bounceEvent = new event_1.EventApi(cfg => this.client.bounceEvent(cfg), event_1.EventApi.BounceProps);
@@ -102,24 +95,6 @@ class ApiClient {
         this.contacts = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.ContactType, dataExt_1.DataExtApi.ContactProps, dataExt_1.DataExtApi.ContactPropMap);
         this.subscriptions = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.SubscriptionType, dataExt_1.DataExtApi.SubscriptionProps, dataExt_1.DataExtApi.SubscriptionPropMap);
     }
-    // private async getUnsubscribes(subs: any[]) {
-    // 	if (subs.length == 0) return subs;
-    //
-    // 	const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
-    // 	const unsubs = await this.unsubscribes.get(subKeys, 'SubscriberKey');
-    //
-    // 	unsubs.forEach(unsub => {
-    // 		const subKey = unsub.SubscriberKey as string;
-    // 		const sub = subs.find(sub => sub.SubscriberKey == subKey);
-    //
-    // 		if (sub !== undefined) {
-    // 			sub.UnsubDate = unsub.UnsubDateUTC;
-    // 			sub.UnsubReason = unsub.UnsubReason;
-    // 		}
-    // 	});
-    //
-    // 	return subs;
-    // }
     async getSubscriberLists(subs) {
         if (subs.length == 0)
             return subs;

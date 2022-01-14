@@ -8,15 +8,6 @@ const object_1 = require("./object");
  * Contact and Subscription objects are synced from Salesforce every 15 minutes.
  */
 class DataExtApi extends object_1.ObjectApi {
-    // static readonly UnsubscribeType = 'Global_Unsubscribes';
-    //
-    // static readonly UnsubscribeProps = [
-    // 	'BusinessUnitID',
-    // 	'SubscriberID',
-    // 	'SubscriberKey',
-    // 	'UnsubDateUTC',
-    // 	'UnsubReason'
-    // ];
     constructor(factory, extName, props = [], propMap = {}) {
         super(factory, [...DataExtApi.Props, ...props]);
         this.extName = extName;
