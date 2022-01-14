@@ -7,6 +7,13 @@ import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi, MultiEventApi } from './api/event';
 import { DataExtApi } from './api/dataExt';
 
+import {
+	formatSubscriber,
+	formatSubscriberList,
+	formatSubscriberEvent,
+	handleError
+} from './api-client';
+
 type MapFn<T, U> = {
 	(value: T, index: number, array: T[]): U;
 }
@@ -60,17 +67,18 @@ export class ApiClient {
 		.get('/subscribers', (req: Request, resp: Response) => {
 			const search = req.query.search as string;
 			this.subscribers.get(search, 'SubscriberKey', 'EmailAddress')
+			.then(res => res.map(formatSubscriber))
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 
 		.get('/subscriber/:subKey', (req: Request, resp: Response) => {
 			this.subscribers.get(req.params.subKey, 'SubscriberKey')
 			.then(res => this.getSubscriberLists(res))
 			.then(res => this.getSubscriberEvents(res))
-			.then(res => res.map(this.formatSubscriber.bind(this)))
+			.then(res => res.map(formatSubscriber))
 			.then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 		.put('/subscriber/:subKey', (req: Request, resp: Response) => {
 			const props = {
@@ -80,14 +88,14 @@ export class ApiClient {
 
 			this.subscribers.put(props)
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 
 		.get('/subscriber/:subKey/lists', (req: Request, resp: Response) => {
 			this.lists.getBySubscriber(req.params.subKey)
-			.then(res => res.map(this.formatSubscriberList))
+			.then(res => res.map(formatSubscriberList))
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 		.put('/subscriber/:subKey/lists', (req: Request, resp: Response) => {
 			const props = {
@@ -97,7 +105,7 @@ export class ApiClient {
 
 			this.subscribers.put(props)
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 
 		.get('/subscriber/:subKey/events', (req: Request, resp: Response) => {
@@ -105,27 +113,27 @@ export class ApiClient {
 
 			this.events.get(subKey)
 			.then(res => this.getEventLists(res))
-			.then(res => res.map(this.formatSubscriberEvent))
+			.then(res => res.map(formatSubscriberEvent))
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 
 		.get('/contacts', (req: Request, resp: Response) => {
 			const search = req.query.search as string;
 			this.contacts.get(search, 'Id', 'Email')
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 		.get('/contact/:id', (req: Request, resp: Response) => {
 			this.contacts.get(req.params.id, 'Id')
 			.then(res => this.getContactSubscriptions(res))
 			.then(res => res.length ? resp.json(res[0]) : resp.sendStatus(404))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		})
 		.get('/contact/:id/subscriptions', (req: Request, resp: Response) => {
 			this.subscriptions.get(req.params.id, 'Contact__c')
 			.then(res => resp.json(res))
-			.catch(this.handleError(resp));
+			.catch(handleError(resp));
 		});
 
 		this.subscribers = new SubscriberApi(cfg => this.client.subscriber(cfg));
@@ -241,74 +249,5 @@ export class ApiClient {
 		});
 
 		return events;
-	}
-
-	private async getEvents(subKey: string | string[]) {
-		if (subKey.length == 0) return [];
-
-		return [].concat(...(await Promise.all([
-			this.bounceEvent.get(subKey, 'SubscriberKey'),
-			this.clickEvent.get(subKey, 'SubscriberKey'),
-			this.openEvent.get(subKey, 'SubscriberKey'),
-			this.sentEvent.get(subKey, 'SubscriberKey'),
-			this.unsubEvent.get(subKey, 'SubscriberKey')
-		])));
-	}
-
-	private formatSubscriber(sub: any) {
-		sub.ObjectID = undefined;
-		sub.PartnerKey = undefined;
-
-		if (sub.Lists !== undefined)
-			sub.Lists.forEach(this.formatSubscriberList);
-
-		if (sub.Events !== undefined)
-			sub.Events.forEach(this.formatSubscriberEvent);
-
-		return sub;
-	}
-
-	private formatSubscriberList(listSub: any) {
-		listSub.ObjectID = undefined;
-		listSub.PartnerKey = undefined;
-		listSub.SubscriberKey = undefined;
-
-		if (listSub.List !== undefined) {
-			listSub.ListName = listSub.List.ListName;
-			listSub.ListCode = listSub.List.ListCode;
-			listSub.ListClassification = listSub.List.ListClassification;
-			listSub.List = undefined;
-		}
-
-		if (listSub.PartnerProperties !== undefined) {
-			listSub.UnsubscribedDate = listSub.PartnerProperties.Value;
-			listSub.PartnerProperties = undefined;
-		}
-
-		return listSub;
-	}
-
-	private formatSubscriberEvent(event: any) {
-		event.ObjectID = undefined;
-		event.PartnerKey = undefined;
-		event.SubscriberKey = undefined;
-		event.SendID = undefined;
-
-		if (event.Send !== undefined) {
-			event.ListID = event.Send.List.ID;
-			event.ListName = event.Send.List.ListName;
-			event.ListCode = event.Send.List.ListCode;
-			event.EmailName = event.Send.EmailName;
-			event.Send = undefined;
-		}
-
-		return event;
-	}
-
-	private handleError(resp: Response) {
-		return (err: any) => {
-			console.error(err);
-			resp.status(500).json(err);
-		}
 	}
 }
