@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventApi = void 0;
+exports.MultiEventApi = exports.EventApi = void 0;
 const object_1 = require("./object");
 class EventApi extends object_1.ObjectApi {
     constructor(factory, props = [], ttl) {
@@ -46,3 +46,13 @@ EventApi.ClickProps = [
 EventApi.UnsubProps = [
     'IsMasterUnsubscribed'
 ];
+class MultiEventApi {
+    constructor(eventTypes) {
+        this.eventApis = eventTypes.map(type => new EventApi(type[0], type[1] || [], type[2]));
+    }
+    async get(value, field = 'SubscriberKey', extra) {
+        const proms = this.eventApis.map(api => api.get(value, field, extra));
+        return [].concat(...(await Promise.all(proms)));
+    }
+}
+exports.MultiEventApi = MultiEventApi;

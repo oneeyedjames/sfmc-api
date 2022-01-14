@@ -4,7 +4,7 @@ import * as ET_Client from 'sfmc-fuelsdk-node';
 import { SubscriberApi } from './api/subscriber';
 import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
-import { EventApi } from './api/event';
+import { EventApi, MultiEventApi } from './api/event';
 import { DataExtApi } from './api/dataExt';
 
 type MapFn<T, U> = {
@@ -45,11 +45,7 @@ export class ApiClient {
 
 	readonly sends: SendApi;
 
-	readonly bounceEvent: EventApi;
-	readonly clickEvent: EventApi;
-	readonly openEvent: EventApi;
-	readonly sentEvent: EventApi;
-	readonly unsubEvent: EventApi;
+	readonly events: MultiEventApi;
 
 	readonly contacts: DataExtApi;
 	readonly subscriptions: DataExtApi;
@@ -107,7 +103,7 @@ export class ApiClient {
 		.get('/subscriber/:subKey/events', (req: Request, resp: Response) => {
 			const subKey = req.params.subKey as string;
 
-			this.getEvents(subKey)
+			this.events.get(subKey)
 			.then(res => this.getEventLists(res))
 			.then(res => res.map(this.formatSubscriberEvent))
 			.then(res => resp.json(res))
@@ -144,18 +140,13 @@ export class ApiClient {
 			cfg => new ListSendObject(this.client, cfg)
 		);
 
-		this.bounceEvent = new EventApi(cfg => this.client.bounceEvent(cfg),
-			EventApi.BounceProps);
-
-		this.clickEvent = new EventApi(cfg => this.client.clickEvent(cfg),
-			EventApi.ClickProps, 30);
-
-		this.openEvent = new EventApi(cfg => this.client.openEvent(cfg), [], 30);
-
-		this.sentEvent = new EventApi(cfg => this.client.sentEvent(cfg), [], 30);
-
-		this.unsubEvent = new EventApi(cfg => this.client.unsubEvent(cfg),
-			EventApi.UnsubProps);
+		this.events = new MultiEventApi([
+			[cfg => this.client.sentEvent(cfg), [], 30],
+			[cfg => this.client.openEvent(cfg), [], 30],
+			[cfg => this.client.clickEvent(cfg), EventApi.ClickProps, 30],
+			[cfg => this.client.unsubEvent(cfg), EventApi.UnsubProps],
+			[cfg => this.client.bounceEvent(cfg), EventApi.BounceProps]
+		]);
 
 		this.contacts = new DataExtApi(
 			cfg => this.client.dataExtensionRow(cfg),
@@ -197,7 +188,7 @@ export class ApiClient {
 		subs.forEach(sub => sub.Events = []);
 
 		const subKeys = subs.mapUnique<string>(sub => sub.SubscriberKey);
-		const events = await this.getEvents(subKeys);
+		const events = await this.events.get(subKeys);
 
 		if (events.length == 0) return subs;
 

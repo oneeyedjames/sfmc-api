@@ -50,3 +50,17 @@ export class EventApi extends ObjectApi {
 		}
 	}
 }
+
+export class MultiEventApi {
+	protected eventApis: EventApi[];
+
+	constructor(eventTypes: [ApiObjectFactory, string[]?, number?][]) {
+		this.eventApis = eventTypes.map(type =>
+			new EventApi(type[0], type[1] || [], type[2]));
+	}
+
+	async get(value?: string | string[], field = 'SubscriberKey', extra?: string) {
+		const proms = this.eventApis.map(api => api.get(value, field, extra));
+		return [].concat(...(await Promise.all(proms)));
+	}
+}
