@@ -136,7 +136,9 @@ export class ApiClient {
 			.catch(handleError(resp));
 		});
 
-		this.subscribers = new SubscriberApi(cfg => this.client.subscriber(cfg));
+		this.subscribers = new SubscriberApi(
+			cfg => this.client.subscriber(cfg)
+		);
 
 		this.lists = new ListApi(
 			cfg => this.client.list(cfg),

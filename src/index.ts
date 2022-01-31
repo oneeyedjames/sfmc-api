@@ -21,15 +21,18 @@ const apiCfg: ApiClientConfig = {
 
 const ukCfg: ApiClientConfig = { ...apiCfg, accountId: process.env.ET_UK_MID };
 const usCfg: ApiClientConfig = { ...apiCfg, accountId: process.env.ET_US_MID };
+const jpCfg: ApiClientConfig = { ...apiCfg, accountId: process.env.ET_JP_MID };
 
 const app = new Application();
 const api = new ApiClient(apiCfg);
 const ukApi = new ApiClient(ukCfg);
 const usApi = new ApiClient(usCfg);
+const jpApi = new ApiClient(jpCfg);
 
 app.use('/api', Router().use(authenticator, api.router))
 .use('/api/uk', Router().use(authenticator, ukApi.router))
 .use('/api/us', Router().use(authenticator, usApi.router))
+.use('/api/jp', Router().use(authenticator, jpApi.router))
 .listen(process.env.HTTP_PORT)
 .then((addr: Address) => {
 	console.log(`Server listening on ${addr.address}:${addr.port} ...`);

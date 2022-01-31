@@ -7,14 +7,14 @@ import { ObjectApi } from './object';
  * Contact and Subscription objects are synced from Salesforce every 15 minutes.
  */
 export class DataExtApi extends ObjectApi {
-	static readonly Props = [
+	static readonly SalesforceProps = [
 		'Id'
 	];
 
 	static readonly ContactType = 'Contact_Salesforce';
 
 	static readonly ContactProps = [
-		// 'Id',
+		...DataExtApi.SalesforceProps,
 		'Legacy_Id__c',
 		'Customer_Number__c',
 		'BusinessLocation__c',
@@ -32,7 +32,7 @@ export class DataExtApi extends ObjectApi {
 	static readonly SubscriptionType = 'Subscription__c_Salesforce';
 
 	static readonly SubscriptionProps = [
-		// 'Id',
+		...DataExtApi.SalesforceProps,
 		'Business_Location__c',
 		'Line_of_Business__c',
 		'Contact__c',
@@ -55,7 +55,7 @@ export class DataExtApi extends ObjectApi {
 		props: string[] = [],
 		protected propMap: { [prop: string]: string } = {}
 	) {
-		super(factory, [...DataExtApi.Props, ...props]);
+		super(factory, props);
 	}
 
 	async get(value?: string | string[], field = 'Id', extra?: string) {
@@ -70,7 +70,7 @@ export class DataExtApi extends ObjectApi {
 				data[key] = prop.Value;
 			});
 
-			return data;
+			return data as any;
 		});
 	}
 

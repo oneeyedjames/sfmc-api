@@ -18,13 +18,16 @@ const apiCfg = {
 };
 const ukCfg = { ...apiCfg, accountId: process.env.ET_UK_MID };
 const usCfg = { ...apiCfg, accountId: process.env.ET_US_MID };
+const jpCfg = { ...apiCfg, accountId: process.env.ET_JP_MID };
 const app = new app_1.Application();
 const api = new api_1.ApiClient(apiCfg);
 const ukApi = new api_1.ApiClient(ukCfg);
 const usApi = new api_1.ApiClient(usCfg);
+const jpApi = new api_1.ApiClient(jpCfg);
 app.use('/api', express_1.Router().use(auth_1.default, api.router))
     .use('/api/uk', express_1.Router().use(auth_1.default, ukApi.router))
     .use('/api/us', express_1.Router().use(auth_1.default, usApi.router))
+    .use('/api/jp', express_1.Router().use(auth_1.default, jpApi.router))
     .listen(process.env.HTTP_PORT)
     .then((addr) => {
     console.log(`Server listening on ${addr.address}:${addr.port} ...`);

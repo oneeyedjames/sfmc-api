@@ -9,7 +9,7 @@ const object_1 = require("./object");
  */
 class DataExtApi extends object_1.ObjectApi {
     constructor(factory, extName, props = [], propMap = {}) {
-        super(factory, [...DataExtApi.Props, ...props]);
+        super(factory, props);
         this.extName = extName;
         this.propMap = propMap;
     }
@@ -32,12 +32,12 @@ class DataExtApi extends object_1.ObjectApi {
     }
 }
 exports.DataExtApi = DataExtApi;
-DataExtApi.Props = [
+DataExtApi.SalesforceProps = [
     'Id'
 ];
 DataExtApi.ContactType = 'Contact_Salesforce';
 DataExtApi.ContactProps = [
-    // 'Id',
+    ...DataExtApi.SalesforceProps,
     'Legacy_Id__c',
     'Customer_Number__c',
     'BusinessLocation__c',
@@ -52,7 +52,7 @@ DataExtApi.ContactPropMap = {
 };
 DataExtApi.SubscriptionType = 'Subscription__c_Salesforce';
 DataExtApi.SubscriptionProps = [
-    // 'Id',
+    ...DataExtApi.SalesforceProps,
     'Business_Location__c',
     'Line_of_Business__c',
     'Contact__c',
