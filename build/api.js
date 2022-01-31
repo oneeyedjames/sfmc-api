@@ -85,6 +85,16 @@ class ApiClient {
             this.subscriptions.get(req.params.id, 'Contact__c')
                 .then(res => resp.json(res))
                 .catch(api_client_1.handleError(resp));
+        })
+            .get('/undeliverables', (req, resp) => {
+            this.undeliverables.get()
+                .then(res => resp.json(res))
+                .catch(api_client_1.handleError(resp));
+        })
+            .get('/undeliverable/:id', (req, resp) => {
+            this.undeliverables.get(req.params.id, 'SubscriberKey')
+                .then(res => resp.json(res))
+                .catch(api_client_1.handleError(resp));
         });
         this.subscribers = new subscriber_1.SubscriberApi(cfg => this.client.subscriber(cfg));
         this.lists = new list_1.ListApi(cfg => this.client.list(cfg), cfg => this.client.listSubscriber(cfg));
@@ -98,6 +108,7 @@ class ApiClient {
         ]);
         this.contacts = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.ContactType, dataExt_1.DataExtApi.ContactProps, dataExt_1.DataExtApi.ContactPropMap);
         this.subscriptions = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.SubscriptionType, dataExt_1.DataExtApi.SubscriptionProps, dataExt_1.DataExtApi.SubscriptionPropMap);
+        this.undeliverables = new dataExt_1.UndeliverableApi(cfg => this.client.dataExtensionRow(cfg));
     }
     async getSubscriberLists(subs) {
         if (subs.length == 0)

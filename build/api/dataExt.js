@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DataExtApi = void 0;
+exports.UndeliverableApi = exports.DataExtApi = void 0;
 const object_1 = require("./object");
 /**
  * Represents data in synchronized data extensions.
@@ -66,4 +66,48 @@ DataExtApi.SubscriptionPropMap = {
     Contact__c: 'ContactId',
     Global_Product__c: 'GlobalProductId',
     Line_of_Business__c: 'LineOfBusiness'
+};
+/**
+ * Represents subscribers with bounced emails.
+ *
+ * Bounced emails are queried once per day.
+ */
+class UndeliverableApi extends DataExtApi {
+    constructor(factory) {
+        super(factory, UndeliverableApi.Type, UndeliverableApi.Props, UndeliverableApi.PropMap);
+    }
+    async get(value = 'Held', field = 'Status', extra) {
+        return await super.get(value, field, extra);
+    }
+    getFilter(value = 'Held', field = 'Status', extra) {
+        const parentFilter = super.getFilter(value, field, extra);
+        if (field !== 'Status')
+            return parentFilter;
+        const refDate = new Date();
+        refDate.setDate(refDate.getDate() - 30);
+        return {
+            operator: 'AND',
+            leftOperand: parentFilter,
+            rightOperand: {
+                operator: 'greaterThanOrEqual',
+                leftOperand: 'DateUndeliverable',
+                rightOperand: refDate.toISOString()
+            }
+        };
+    }
+}
+exports.UndeliverableApi = UndeliverableApi;
+UndeliverableApi.Type = 'MC_Undeliverable_Subscribers';
+UndeliverableApi.Props = [
+    'SubscriberKey',
+    'Status',
+    'EmailAddress',
+    'SystemTimestamp_DateUndeliverable',
+    'DateUndeliverable'
+];
+UndeliverableApi.PropMap = {
+    SubscriberKey: 'Id',
+    EmailAddress: 'Email',
+    SystemTimestamp_DateUndeliverable: 'BouncedAt',
+    DateUndeliverable: 'RecordedAt'
 };

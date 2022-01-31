@@ -5,7 +5,7 @@ import { SubscriberApi } from './api/subscriber';
 import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi, MultiEventApi } from './api/event';
-import { DataExtApi } from './api/dataExt';
+import { DataExtApi, UndeliverableApi } from './api/dataExt';
 
 import {
 	formatSubscriber,
@@ -56,6 +56,7 @@ export class ApiClient {
 
 	readonly contacts: DataExtApi;
 	readonly subscriptions: DataExtApi;
+	readonly undeliverables: UndeliverableApi;
 
 	constructor(config: ApiClientConfig) {
 		this.client = new ET_Client(config.clientId, config.clientSecret, undefined, {
@@ -134,6 +135,17 @@ export class ApiClient {
 			this.subscriptions.get(req.params.id, 'Contact__c')
 			.then(res => resp.json(res))
 			.catch(handleError(resp));
+		})
+
+		.get('/undeliverables', (req: Request, resp: Response) => {
+			this.undeliverables.get()
+			.then(res => resp.json(res))
+			.catch(handleError(resp));
+		})
+		.get('/undeliverable/:id', (req: Request, resp: Response) => {
+			this.undeliverables.get(req.params.id, 'SubscriberKey')
+			.then(res => resp.json(res))
+			.catch(handleError(resp));
 		});
 
 		this.subscribers = new SubscriberApi(
@@ -170,6 +182,10 @@ export class ApiClient {
 			DataExtApi.SubscriptionType,
 			DataExtApi.SubscriptionProps,
 			DataExtApi.SubscriptionPropMap
+		);
+
+		this.undeliverables = new UndeliverableApi(
+			cfg => this.client.dataExtensionRow(cfg)
 		);
 	}
 

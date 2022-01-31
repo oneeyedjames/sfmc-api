@@ -1,4 +1,4 @@
-import { ApiObjectFactory } from './api';
+import { ApiObjectFactory, ApiObjectFilter } from './api';
 import { ObjectApi } from './object';
 
 /**
@@ -78,5 +78,67 @@ export class DataExtApi extends ObjectApi {
 		const config = super.getConfig(value, field, extra) as any;
 		config.Name = this.extName;
 		return config;
+	}
+}
+
+/**
+ * Represents subscribers with bounced emails.
+ *
+ * Bounced emails are queried once per day.
+ */
+export class UndeliverableApi extends DataExtApi {
+	static readonly Type = 'MC_Undeliverable_Subscribers';
+
+	static readonly Props = [
+		'SubscriberKey',
+		'Status',
+		'EmailAddress',
+		'SystemTimestamp_DateUndeliverable',
+		'DateUndeliverable'
+	];
+
+	static readonly PropMap = {
+		SubscriberKey: 'Id',
+		EmailAddress: 'Email',
+		SystemTimestamp_DateUndeliverable: 'BouncedAt',
+		DateUndeliverable: 'RecordedAt'
+	}
+
+	constructor(factory: ApiObjectFactory) {
+		super(
+			factory,
+			UndeliverableApi.Type,
+			UndeliverableApi.Props,
+			UndeliverableApi.PropMap
+		);
+	}
+
+	async get(
+		value: string | string[] = 'Held',
+		field = 'Status', extra?: string
+	) {
+		return await super.get(value, field, extra);
+	}
+
+	protected getFilter(
+		value: string | string[] = 'Held',
+		field = 'Status', extra?: string
+	): ApiObjectFilter {
+		const parentFilter = super.getFilter(value, field, extra);
+
+		if (field !== 'Status') return parentFilter;
+
+		const refDate = new Date();
+		refDate.setDate(refDate.getDate() - 30);
+
+		return {
+			operator: 'AND',
+			leftOperand: parentFilter,
+			rightOperand: {
+				operator: 'greaterThanOrEqual',
+				leftOperand: 'DateUndeliverable',
+				rightOperand: refDate.toISOString()
+			}
+		}
 	}
 }
