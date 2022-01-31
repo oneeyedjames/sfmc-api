@@ -8,6 +8,7 @@ const list_1 = require("./api/list");
 const send_1 = require("./api/send");
 const event_1 = require("./api/event");
 const dataExt_1 = require("./api/dataExt");
+const business_unit_1 = require("./api/business-unit");
 const api_client_1 = require("./api-client");
 Array.prototype.unique = function () {
     return Array.from(new Set(this));
@@ -85,7 +86,13 @@ class ApiClient {
             this.subscriptions.get(req.params.id, 'Contact__c')
                 .then(res => resp.json(res))
                 .catch(api_client_1.handleError(resp));
+        })
+            .get('/business-units', (req, resp) => {
+            this.businessUnits.get()
+                .then(res => resp.json(res))
+                .catch(api_client_1.handleError(resp));
         });
+        this.businessUnits = new business_unit_1.BusinessUnitApi(cfg => new business_unit_1.BusinessUnitObject(this.client, cfg));
         this.subscribers = new subscriber_1.SubscriberApi(cfg => this.client.subscriber(cfg));
         this.lists = new list_1.ListApi(cfg => this.client.list(cfg), cfg => this.client.listSubscriber(cfg));
         this.sends = new send_1.SendApi(cfg => new send_1.SendObject(this.client, cfg), cfg => new send_1.ListSendObject(this.client, cfg));

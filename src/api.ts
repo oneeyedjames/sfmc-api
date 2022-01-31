@@ -6,6 +6,7 @@ import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi, MultiEventApi } from './api/event';
 import { DataExtApi } from './api/dataExt';
+import { BusinessUnitApi, BusinessUnitObject } from './api/business-unit';
 
 import {
 	formatSubscriber,
@@ -45,6 +46,8 @@ export class ApiClient {
 	private client: ET_Client;
 
 	readonly router: Router;
+
+	readonly businessUnits: BusinessUnitApi;
 
 	readonly subscribers: SubscriberApi;
 
@@ -134,7 +137,17 @@ export class ApiClient {
 			this.subscriptions.get(req.params.id, 'Contact__c')
 			.then(res => resp.json(res))
 			.catch(handleError(resp));
+		})
+
+		.get('/business-units', (req: Request, resp: Response) => {
+			this.businessUnits.get()
+			.then(res => resp.json(res))
+			.catch(handleError(resp));
 		});
+
+		this.businessUnits = new BusinessUnitApi(
+			cfg => new BusinessUnitObject(this.client, cfg)
+		);
 
 		this.subscribers = new SubscriberApi(
 			cfg => this.client.subscriber(cfg)
