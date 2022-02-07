@@ -8,6 +8,7 @@ const list_1 = require("./api/list");
 const send_1 = require("./api/send");
 const event_1 = require("./api/event");
 const dataExt_1 = require("./api/dataExt");
+const user_1 = require("./api/user");
 const api_client_1 = require("./api-client");
 Array.prototype.unique = function () {
     return Array.from(new Set(this));
@@ -98,6 +99,7 @@ class ApiClient {
         ]);
         this.contacts = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.ContactType, dataExt_1.DataExtApi.ContactProps, dataExt_1.DataExtApi.ContactPropMap);
         this.subscriptions = new dataExt_1.DataExtApi(cfg => this.client.dataExtensionRow(cfg), dataExt_1.DataExtApi.SubscriptionType, dataExt_1.DataExtApi.SubscriptionProps, dataExt_1.DataExtApi.SubscriptionPropMap);
+        this.users = new user_1.UserApi(cfg => new user_1.UserObject(this.client, cfg));
     }
     async getSubscriberLists(subs) {
         if (subs.length == 0)

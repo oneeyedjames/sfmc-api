@@ -6,6 +6,7 @@ import { ListApi } from './api/list';
 import { SendApi, SendObject, ListSendObject } from './api/send';
 import { EventApi, MultiEventApi } from './api/event';
 import { DataExtApi } from './api/dataExt';
+import { UserApi, UserObject } from './api/user';
 
 import {
 	formatSubscriber,
@@ -56,6 +57,8 @@ export class ApiClient {
 
 	readonly contacts: DataExtApi;
 	readonly subscriptions: DataExtApi;
+
+	readonly users: UserApi;
 
 	constructor(config: ApiClientConfig) {
 		this.client = new ET_Client(config.clientId, config.clientSecret, undefined, {
@@ -170,6 +173,10 @@ export class ApiClient {
 			DataExtApi.SubscriptionType,
 			DataExtApi.SubscriptionProps,
 			DataExtApi.SubscriptionPropMap
+		);
+
+		this.users = new UserApi(
+			cfg => new UserObject(this.client, cfg)
 		);
 	}
 
