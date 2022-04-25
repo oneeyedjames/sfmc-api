@@ -45,8 +45,8 @@ export class JwtAuthenticator {
 
 			const jwt = JwtAuthenticator.decode(token);
 
-			const clientId = (typeof jwt.payload.aud == 'string')
-				? jwt.payload.aud : jwt.payload.aud[0];
+			const clientId = Array.isArray(jwt.payload.aud)
+				? jwt.payload.aud[0] : jwt.payload.aud;
 
 			this.provider.find(clientId)
 			.then(client => JwtAuthenticator.verify(token, client.secret))
