@@ -32,12 +32,12 @@ function formatSubscriberEvent(event) {
     event.ObjectID = undefined;
     event.PartnerKey = undefined;
     event.SubscriberKey = undefined;
-    event.SendID = undefined;
     if (event.Send !== undefined) {
         event.ListID = event.Send.List.ID;
         event.ListName = event.Send.List.ListName;
         event.ListCode = event.Send.List.ListCode;
         event.EmailName = event.Send.EmailName;
+        event.SendDate = event.Send.SentDate;
         event.Send = undefined;
     }
     return event;
