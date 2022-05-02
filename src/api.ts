@@ -153,10 +153,12 @@ export class ApiClient {
 			cfg => new ListSendObject(this.client, cfg)
 		);
 
+		const ttl = 90;
+
 		this.events = new MultiEventApi([
-			[cfg => this.client.sentEvent(cfg), [], 30],
-			[cfg => this.client.openEvent(cfg), [], 30],
-			[cfg => this.client.clickEvent(cfg), EventApi.ClickProps, 30],
+			[cfg => this.client.sentEvent(cfg), [], ttl],
+			[cfg => this.client.openEvent(cfg), [], ttl],
+			[cfg => this.client.clickEvent(cfg), EventApi.ClickProps, ttl],
 			[cfg => this.client.unsubEvent(cfg), EventApi.UnsubProps],
 			[cfg => this.client.bounceEvent(cfg), EventApi.BounceProps]
 		]);

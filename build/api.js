@@ -90,10 +90,11 @@ class ApiClient {
         this.subscribers = new subscriber_1.SubscriberApi(cfg => this.client.subscriber(cfg));
         this.lists = new list_1.ListApi(cfg => this.client.list(cfg), cfg => this.client.listSubscriber(cfg));
         this.sends = new send_1.SendApi(cfg => new send_1.SendObject(this.client, cfg), cfg => new send_1.ListSendObject(this.client, cfg));
+        const ttl = 90;
         this.events = new event_1.MultiEventApi([
-            [cfg => this.client.sentEvent(cfg), [], 30],
-            [cfg => this.client.openEvent(cfg), [], 30],
-            [cfg => this.client.clickEvent(cfg), event_1.EventApi.ClickProps, 30],
+            [cfg => this.client.sentEvent(cfg), [], ttl],
+            [cfg => this.client.openEvent(cfg), [], ttl],
+            [cfg => this.client.clickEvent(cfg), event_1.EventApi.ClickProps, ttl],
             [cfg => this.client.unsubEvent(cfg), event_1.EventApi.UnsubProps],
             [cfg => this.client.bounceEvent(cfg), event_1.EventApi.BounceProps]
         ]);
