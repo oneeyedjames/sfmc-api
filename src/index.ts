@@ -36,6 +36,7 @@ const locCfg = {
 	CO: { ...apiCfg, accountId: process.env.ET_CO_MID },
 	MX: { ...apiCfg, accountId: process.env.ET_MX_MID },
 	PE: { ...apiCfg, accountId: process.env.ET_PE_MID },
+	AU: { ...apiCfg, accountId: process.env.ET_AU_MID },
 	BR: { ...apiCfg, accountId: process.env.ET_BR_MID },
 	NZ: { ...apiCfg, accountId: process.env.ET_NZ_MID },
 	JM: { ...apiCfg, accountId: process.env.ET_JM_MID },
