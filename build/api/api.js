@@ -15,7 +15,9 @@ class ApiObject {
         this.options = config.options || {};
     }
     get(cb) {
-        var filter = this.config.filter ? { filter: this.config.filter } : null;
+        // var filter = this.config.filter ? { filter: this.config.filter } : null;
+        var filter = { continueRequest: this.config.continueRequest,
+            filter: this.config.filter } || null;
         if (this.props.length == 0) {
             cb({ error: `A property list is required for ${this.objName} retrieval.` });
         }

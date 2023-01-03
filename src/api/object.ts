@@ -9,6 +9,10 @@ import {
 } from './api';
 
 export class ObjectApi {
+	private prevRequestID?: string;
+
+	public get hasMore() { return this.prevRequestID !== undefined; }
+
 	constructor(
 		protected getObject: ApiObjectFactory,
 		protected props: ApiObjectProps = []
@@ -21,6 +25,21 @@ export class ObjectApi {
 		} else {
 			return Promise.reject('No API Object');
 		}
+	}
+
+	getMore() {
+		if (this.getObject === undefined)
+			return Promise.reject('No API Object');
+
+		if (this.prevRequestID === undefined)
+			return Promise.reject('No Previous Request');
+
+		const config = {
+			props: this.props,
+			continueRequest: this.prevRequestID
+		} as ApiObjectConfig;
+
+		return this.getPromise(this.getObject(config));
 	}
 
 	put(props: ApiObjectProps) {
@@ -36,8 +55,11 @@ export class ObjectApi {
 	protected async getPromise<T = any>(obj: ApiObject) {
 		const res = await asyncToPromise(obj.get.bind(obj))();
 
-		if (res.body.OverallStatus == 'OK' ||
-			res.body.OverallStatus == 'MoreDataAvailable') {
+		if (res.body.OverallStatus == 'OK') {
+			this.prevRequestID = undefined;
+			return res.body.Results as T[];
+		} else if (res.body.OverallStatus == 'MoreDataAvailable') {
+			this.prevRequestID = res.body.RequestID;
 			return res.body.Results as T[];
 		} else {
 			throw new Error(res.error || res);

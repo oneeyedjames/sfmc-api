@@ -7,6 +7,7 @@ class ObjectApi {
         this.getObject = getObject;
         this.props = props;
     }
+    get hasMore() { return this.prevRequestID !== undefined; }
     get(value, field = 'ID', extra) {
         if (this.getObject !== undefined) {
             const config = this.getConfig(value, field, extra);
@@ -15,6 +16,17 @@ class ObjectApi {
         else {
             return Promise.reject('No API Object');
         }
+    }
+    getMore() {
+        if (this.getObject === undefined)
+            return Promise.reject('No API Object');
+        if (this.prevRequestID === undefined)
+            return Promise.reject('No Previous Request');
+        const config = {
+            props: this.props,
+            continueRequest: this.prevRequestID
+        };
+        return this.getPromise(this.getObject(config));
     }
     put(props) {
         if (this.getObject !== undefined) {
@@ -28,8 +40,12 @@ class ObjectApi {
     }
     async getPromise(obj) {
         const res = await async_1.asyncToPromise(obj.get.bind(obj))();
-        if (res.body.OverallStatus == 'OK' ||
-            res.body.OverallStatus == 'MoreDataAvailable') {
+        if (res.body.OverallStatus == 'OK') {
+            this.prevRequestID = undefined;
+            return res.body.Results;
+        }
+        else if (res.body.OverallStatus == 'MoreDataAvailable') {
+            this.prevRequestID = res.body.RequestID;
             return res.body.Results;
         }
         else {
